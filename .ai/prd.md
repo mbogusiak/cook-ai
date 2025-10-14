@@ -128,39 +128,172 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 
 ## 7. Historyjki użytkowników (User Stories)
 
-_(Historyjki US-001 do US-006 pozostają bez zmian, ale ich kryteria akceptacji muszą uwzględniać nową logikę)_
+### Uwierzytelnianie
 
-### US-006 
+#### ID: US-001
+
+**Tytuł**: Logowanie przez Google
+
+**Opis**: Jako nowy lub powracający użytkownik, chcę zalogować się do aplikacji za pomocą mojego konta Google, aby uzyskać szybki i bezpieczny dostęp do moich planów.
+
+**Kryteria akceptacji**:
+- Na stronie logowania znajduje się przycisk "Zaloguj się przez Google".
+- Po kliknięciu przycisku użytkownik jest przekierowywany do standardowego okna uwierzytelniania Google.
+- Po pomyślnym uwierzytelnieniu w Google, użytkownik jest zalogowany w aplikacji i przekierowany do głównego widoku (lub kreatora planu, jeśli loguje się po raz pierwszy).
+- W przypadku błędu uwierzytelnienia, użytkownik widzi stosowny komunikat.
+
+#### ID: US-002
+
+**Tytuł**: Logowanie przez Facebook
+
+**Opis**: Jako nowy lub powracający użytkownik, chcę zalogować się do aplikacji za pomocą mojego konta Facebook, aby uzyskać szybki i bezpieczny dostęp do moich planów.
+
+**Kryteria akceptacji**:
+- Na stronie logowania znajduje się przycisk "Zaloguj się przez Facebook".
+- Po kliknięciu przycisku użytkownik jest przekierowywany do standardowego okna uwierzytelniania Facebook.
+- Po pomyślnym uwierzytelnieniu w Facebooku, użytkownik jest zalogowany w aplikacji i przekierowany do głównego widoku.
+- W przypadku błędu uwierzytelnienia, użytkownik widzi stosowny komunikat.
+
+#### ID: US-003
+
+**Tytuł**: Wylogowanie z aplikacji
+
+**Opis**: Jako zalogowany użytkownik, chcę mieć możliwość wylogowania się z aplikacji, aby zabezpieczyć swoje konto na współdzielonym urządzeniu.
+
+**Kryteria akceptacji**:
+- W interfejsie aplikacji (np. w menu użytkownika) znajduje się przycisk/link "Wyloguj".
+- Po kliknięciu "Wyloguj", sesja użytkownika zostaje zakończona, a on sam jest przekierowany na stronę logowania.
+
+### Onboarding i generowanie planu
+
+#### ID: US-004
+
+**Tytuł**: Konfiguracja celu kalorycznego i długości planu
+
+**Opis**: Jako nowy użytkownik, po pierwszym zalogowaniu, chcę w prosty sposób zdefiniować moje dzienne zapotrzebowanie kaloryczne i długość planu, aby stworzyć plan dopasowany do moich potrzeb.
+
+**Kryteria akceptacji**:
+- Użytkownik widzi pierwszy krok kreatora z polem do wpisania liczby kalorii i wyboru długości planu.
+- Domyślna długość planu jest ustawiona na 7 dni.
+- Pola formularza mają walidację (np. kalorie muszą być liczbą dodatnią).
+- Po wypełnieniu danych użytkownik może przejść do następnego kroku.
+
+#### ID: US-005
+
+**Tytuł**: Wybór daty rozpoczęcia planu
+
+**Opis**: Jako nowy użytkownik, po zdefiniowaniu celów, chcę wybrać datę rozpoczęcia mojego planu, aby dopasować go do mojego harmonogramu.
+
+**Kryteria akceptacji**:
+- Użytkownik widzi drugi krok kreatora z opcjami wyboru daty startu: "Dzisiaj", "Jutro", "Najbliższy poniedziałek".
+- Opcja "Najbliższy poniedziałek" jest domyślnie zaznaczona.
+- Po wybraniu daty, widoczny jest przycisk "Generuj plan".
+
+
+
+
+#### ID: US-006
 
 **Tytuł**: Generowanie planu żywieniowego
 
 **Opis**: Jako użytkownik, po skonfigurowaniu parametrów planu, chcę jednym kliknięciem wygenerować kompletny plan żywieniowy, który inteligentnie wykorzystuje posiłki wieloporcjowe, abym mógł oszczędzić czas na gotowaniu.
 
 **Kryteria akceptacji**:
-- _(poprzednie kryteria)_
+- Po kliknięciu "Generuj plan", system przetwarza dane i tworzy plan zgodnie z zadanymi kryteriami (kalorie, długość, podział na sloty).
+- Dzienne zapotrzebowanie kaloryczne jest rozdzielane na 4 sloty: śniadanie (20%), obiad (30%), kolacja (30%), przekąska (20%).
+- W trakcie generowania użytkownik widzi wskaźnik ładowania.
+- Po pomyślnym wygenerowaniu, użytkownik jest przekierowywany do widoku swojego planu, na dzień startowy.
 - Plan uwzględnia możliwość zaplanowania tego samego obiadu lub kolacji na dwa kolejne dni, jeśli przepis źródłowy ma >1 porcję.
-- Po wygenerowaniu, użytkownik widzi plan, w którym niektóre posiłki mogą się powtarzać w kolejnych dniach.
+- Po wygenerowaniu, użytkownik widzi plan, w którym niektóre posiłki mogą się powtarzać w kolejnych dniach (funkcja posiłków wieloporcjowych).
 
-### US-007 
+### Przeglądanie i interakcje z planem
+
+#### ID: US-007
 
 **Tytuł**: Przeglądanie planu dziennego
 
+**Opis**: Jako użytkownik, chcę w przejrzysty sposób widzieć wszystkie posiłki zaplanowane na dany dzień, aby szybko zorientować się w moim jadłospisie.
+
 **Kryteria akceptacji**:
-- _(poprzednie kryteria)_
+- Główny widok aplikacji pokazuje posiłki na wybrany dzień.
+- Widoczne są 4 sloty: śniadanie, obiad, kolacja, przekąska.
+- Każdy posiłek jest wyświetlony jako karta z kluczowymi informacjami (nazwa, zdjęcie, kalorie na porcję, czas przygotowania, tag slotu).
+- Każda karta posiłku zawiera link do oryginalnego przepisu na Cookido.
 - Posiłki, które są zaplanowane na dwa dni, mają wyraźne oznaczenia wizualne (np. ikona "x2" pierwszego dnia i ikona "resztki" drugiego dnia).
 
-_(Historyjki US-008 do US-011 pozostają bez zmian)_
+#### ID: US-008
 
-### US-013 
+**Tytuł**: Nawigacja między dniami planu
+
+**Opis**: Jako użytkownik, chcę łatwo przełączać się między kolejnymi dniami mojego planu, aby móc sprawdzić, co zaplanowano na przyszłość lub przejrzeć historię.
+
+**Kryteria akceptacji**:
+- W interfejsie znajdują się wyraźne elementy nawigacyjne (np. strzałki, kalendarz) do zmiany wyświetlanego dnia.
+- Użytkownik może nawigować tylko w obrębie dat swojego aktywnego planu.
+- Plan jest prezentowany w widoku dziennym z nawigacją między dniami.
+
+#### ID: US-009
+
+**Tytuł**: Oznaczanie posiłku jako 'Ukończony'
+
+**Opis**: Jako użytkownik, po zjedzeniu posiłku, chcę oznaczyć go jako ukończony, aby śledzić realizację mojego planu.
+
+**Kryteria akceptacji**:
+- Na karcie każdego posiłku znajduje się przycisk/ikona do oznaczenia go jako "ukończony".
+- Po kliknięciu status posiłku zmienia się, co jest wizualnie odzwierciedlone na karcie (np. zmiana koloru, ikona "ptaszka").
+- Zmiana statusu jest automatycznie zapisywana (autozapis).
+- Użytkownik może zmienić status posiłku na jeden z trzech: zaplanowany (domyślny), ukończony, pominięty.
+
+#### ID: US-010
+
+**Tytuł**: Oznaczanie posiłku jako 'Pominięty'
+
+**Opis**: Jako użytkownik, jeśli zdecyduję się nie jeść danego posiłku, chcę oznaczyć go jako pominięty, aby odnotować to w moim planie.
+
+**Kryteria akceptacji**:
+- Na karcie każdego posiłku znajduje się opcja "Pomiń".
+- Po jej wybraniu status posiłku zmienia się na "pominięty", co jest wizualnie zaznaczone (np. przekreślenie, zmiana przezroczystości).
+- Zmiana statusu jest automatycznie zapisywana.
+- Kalorie z pominiętego posiłku nie są dodawane do innych posiłków.
+
+#### ID: US-011
+
+**Tytuł**: Inicjowanie wymiany posiłku
+
+**Opis**: Jako użytkownik, jeśli nie mam ochoty na zaplanowany posiłek, chcę mieć możliwość jego wymiany na inny.
+
+**Kryteria akceptacji**:
+- Na karcie każdego posiłku o statusie "zaplanowany" znajduje się przycisk "Wymień".
+- Po kliknięciu przycisku, system wyświetla interfejs wyboru alternatywnego posiłku.
+- Użytkownik może wymienić każdy zaplanowany posiłek.
+
+#### ID: US-012
 
 **Tytuł**: Wyświetlanie i wybór alternatyw dla posiłku
 
+**Opis**: Jako użytkownik, po zainicjowaniu wymiany, chcę zobaczyć listę odpowiednich alternatyw, aby wybrać tę, która mi najbardziej odpowiada.
+
 **Kryteria akceptacji**:
-- _(poprzednie kryteria)_
+- Po kliknięciu "Wymień" system prezentuje maksymalnie 3 alternatywne posiłki z tego samego slotu.
+- Wszystkie propozycje należą do tego samego slotu (np. śniadanie za śniadanie) i spełniają kryterium kaloryczności (±20% docelowej kaloryczności dla danego slotu).
+- Jeśli w bazie jest mniej niż 3 pasujące posiłki, wyświetlane są wszystkie dostępne.
+- Użytkownik może wybrać jedną z propozycji, aby dokonać wymiany.
+- Dostępny jest przycisk "Anuluj", który zamyka widok wymiany bez wprowadzania zmian.
 - Po wymianie posiłku, który był zaplanowany na dwa dni (wymiana w dniu 1), posiłek w dniu 2 jest również usuwany i zastępowany nową propozycją.
 - Po wymianie posiłku "resztkowego" (wymiana w dniu 2), posiłek z dnia 1 pozostaje bez zmian.
 
-### US-015 (Nowa historyjka)
+#### ID: US-013
+
+**Tytuł**: Automatyczny zapis zmian w planie
+
+**Opis**: Jako użytkownik, chcę, aby wszystkie moje działania (zmiana statusu, wymiana posiłku) były automatycznie zapisywane, abym nie musiał martwić się o utratę danych.
+
+**Kryteria akceptacji**:
+- Każda zmiana statusu posiłku (na ukończony/pominięty) jest natychmiast zapisywana na serwerze bez konieczności dodatkowej akcji ze strony użytkownika.
+- Pomyślna wymiana posiłku jest natychmiast zapisywana i odzwierciedlona w widoku planu.
+- Wszystkie zmiany w planie (zmiana statusu, wymiana posiłku) są zapisywane automatycznie.
+
+#### ID: US-014
 
 **Tytuł**: Oszczędność czasu dzięki posiłkom wieloporcjowym
 
@@ -168,9 +301,13 @@ _(Historyjki US-008 do US-011 pozostają bez zmian)_
 
 **Kryteria akceptacji**:
 - W moim tygodniowym planie widzę co najmniej jedną parę obiadów lub kolacji, które są takie same dzień po dniu.
-- Posiłek pierwszego dnia jest oznaczony jako ten "do ugotowania".
-- Posiłek drugiego dnia jest wyraźnie oznaczony jako "resztki" lub "z wczoraj".
-- Łączna kaloryczność obu dni pozostaje zgodna z moimi założeniami.
+- Jeśli wybrany przez algorytm przepis na obiad lub kolację ma więcej niż 1 porcję, ten sam posiłek jest automatycznie planowany w tym samym slocie na następny dzień.
+- Posiłek pierwszego dnia jest oznaczony jako ten "do ugotowania" (np. etykieta "Ugotuj na 2 dni").
+- Posiłek drugiego dnia jest wyraźnie oznaczony jako "resztki" lub "z wczoraj" z ikoną odgrzewania oraz wizualnym powiązaniem z dniem poprzednim.
+- Kaloryczność całego dania (np. na 2 porcje) jest rozkładana równomiernie na dwa dni.
+- Łączna kaloryczność obu dni pozostaje zgodna z moimi założeniami - całkowity bilans kaloryczny planu musi pozostać zachowany.
+- Śniadania i przekąski domyślnie pozostają unikalne każdego dnia, chyba że analiza danych wykaże inaczej.
+- Algorytm dąży do braku powtórzeń tych samych przepisów w pozostałych slotach w ramach jednego planu.
 
 ## 8. Metryki sukcesu
 
@@ -188,17 +325,12 @@ _(Historyjki US-008 do US-011 pozostają bez zmian)_
 
 ## 9. Kwestie Otwarte i Ryzyka
 
-### Ryzyko: Brak danych o liczbie porcji
-
-**Problem**: Co jeśli API Cookido nie udostępnia wiarygodnych danych o liczbie porcji dla wszystkich przepisów?
-
-**Akcja**: Należy to zweryfikować technicznie przed rozpoczęciem developmentu.
 
 ### Pytanie: Przepisy z 3-4 porcjami
 
 **Problem**: Jak obsługiwać przepisy z 3 lub 4 porcjami? Czy pozwalamy na jedzenie tego samego przez 3-4 dni?
 
-**Decyzja (MVP)**: Na razie ograniczamy się do maksymalnie 2 dni.
+**Decyzja (MVP)**: Akceptujemy takie przepisy. Zakładamy, że użytkownik zje 2 porcje
 
 ### Pytanie: Wyłączenie funkcji posiłków wieloporcjowych
 
