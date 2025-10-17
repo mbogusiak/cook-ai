@@ -435,7 +435,6 @@ Authentication is handled by Supabase Auth with Google/Facebook OAuth providers.
 2. **Recipe Selection**: Find recipes where the target slot is included in `available_slots` and calories are within ±20% of slot target calories
 3. **Multi-portion Handling**: 
    - If lunch/dinner recipe has >1 serving, schedule same meal next day
-   - Split total calories evenly across both days
    - Mark first day as cooking day, second day as leftover
 4. **Uniqueness**: Avoid repeating recipes within same plan (except multi-portion pairs)
 5. **Slot Flexibility**: Same recipe can be scheduled in different slots on different days:
@@ -456,10 +455,6 @@ Authentication is handled by Supabase Auth with Google/Facebook OAuth providers.
 - **Definition**: Plan completed when ≥90% of meals marked as "completed"
 - **Calculation**: (completed_meals / total_meals) * 100 >= 90
 
-#### Rate Limiting
-- **Plan Generation**: Max 5 requests per hour per user
-- **Meal Operations**: Max 100 requests per hour per user
-- **Recipe Search**: Max 200 requests per hour per user
 
 #### Error Handling
 - **Validation Errors**: Return 400 with detailed field-level error messages
