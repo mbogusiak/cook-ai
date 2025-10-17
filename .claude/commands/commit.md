@@ -31,12 +31,6 @@ git commit -m 'feat: Add printer support'
 git commit -m 'fix: #Validation is not firing when creating kitchen'
 ```
 
-or without JIRA reference
-
-```bash
-git commit -m 'chore: update CI configuration for stage environment'
-
-git commit -m 'docs: update readme with naming conventions'
 ```
 ### Git flow
 To start work on some tasks create new branch from master, after merge to master pipeline automatically install changes on DEV.

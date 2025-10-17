@@ -4,7 +4,7 @@
 
 ### 1.1. Wizja produktu
 
-Stworzenie inteligentnego i intuicyjnego asystenta planowania diety dla użytkowników urządzenia Thermomix, który automatyzuje proces tworzenia spersonalizowanych jadłospisów, promując zdrowe nawyki żywieniowe, oszczędność czasu i pełne wykorzystanie ekosystemu Cookido.
+Stworzenie inteligentnego i intuicyjnego asystenta planowania diety, który automatyzuje proces tworzenia spersonalizowanych jadłospisów, promując zdrowe nawyki żywieniowe i  oszczędność czasu.
 
 ###  1.2. Cele Produktu
 Cel 1: Uproszczenie i oszczędność czasu.
@@ -32,8 +32,6 @@ Wiele osób, które chcą świadomie zarządzać swoją dietą, napotyka na szer
 
 ## 4. Założenia i Zależności
 
-- **Dostęp do danych Cookido**: Zakładamy, że mamy stały i niezawodny dostęp do bazy danych przepisów Cookido, w tym do kluczowych informacji: nazwa, kaloryczność, czas przygotowania, zdjęcie oraz liczba porcji.
-- **Jakość danych**: Zakładamy, że dane dotyczące kaloryczności i liczby porcji w Cookido są dokładne i wiarygodne.
 - **Użytkownik posiada Thermomix**: Produkt jest skierowany do osób, które posiadają urządzenie Thermomix i mają dostęp do platformy Cookido.
 
 ## 5. Wymagania funkcjonalne
@@ -57,6 +55,7 @@ Po zakończeniu kreatora, użytkownik zatwierdza dane przyciskiem **"Generuj pla
 
 - Baza danych posiłków pochodzi z platformy Cookido (>6000 przepisów).
 - Każdy posiłek w aplikacji jest powiązany z konkretnym przepisem z Cookido i zawiera informację o liczbie porcji.
+- **Wieloslotowość przepisów**: Jeden przepis z Cookido może być dostępny dla wielu meal slotów (np. sałatka może być przypisana zarówno do obriad jak i kolacji). W momencie generowania planu algorytm wybiera przepis dla konkretnego slotu na podstawie kryteriów kalorycznych dla tego slotu. Ten sam przepis może zatem być zaplanowany w różnych dniach dla różnych slotów (np. w czwartek jako obiad, w piątek jako kolacja).
 
 ### 5.4. Logika generowania planu
 
