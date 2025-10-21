@@ -188,47 +188,88 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_slots: {
+        Row: {
+          recipe_id: number
+          slot: Database["public"]["Enums"]["meal_slot"]
+        }
+        Insert: {
+          recipe_id: number
+          slot: Database["public"]["Enums"]["meal_slot"]
+        }
+        Update: {
+          recipe_id?: number
+          slot?: Database["public"]["Enums"]["meal_slot"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_slots_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
-          calories_per_serving: number
+          calories_kcal: number
+          carbs_g: number | null
+          cook_minutes: number | null
           created_at: string
+          fat_g: number | null
           id: number
           image_url: string | null
+          ingredients: string[]
           is_active: boolean
           name: string
-          servings: number
-          slot: Database["public"]["Enums"]["meal_slot"]
+          portions: number
+          prep_minutes: number | null
+          protein_g: number | null
+          rating_avg: number | null
+          reviews_count: number
           slug: string
           source_url: string | null
-          time_minutes: number | null
           updated_at: string
         }
         Insert: {
-          calories_per_serving: number
+          calories_kcal: number
+          carbs_g?: number | null
+          cook_minutes?: number | null
           created_at?: string
+          fat_g?: number | null
           id?: number
           image_url?: string | null
+          ingredients?: string[]
           is_active?: boolean
           name: string
-          servings?: number
-          slot: Database["public"]["Enums"]["meal_slot"]
+          portions?: number
+          prep_minutes?: number | null
+          protein_g?: number | null
+          rating_avg?: number | null
+          reviews_count?: number
           slug: string
           source_url?: string | null
-          time_minutes?: number | null
           updated_at?: string
         }
         Update: {
-          calories_per_serving?: number
+          calories_kcal?: number
+          carbs_g?: number | null
+          cook_minutes?: number | null
           created_at?: string
+          fat_g?: number | null
           id?: number
           image_url?: string | null
+          ingredients?: string[]
           is_active?: boolean
           name?: string
-          servings?: number
-          slot?: Database["public"]["Enums"]["meal_slot"]
+          portions?: number
+          prep_minutes?: number | null
+          protein_g?: number | null
+          rating_avg?: number | null
+          reviews_count?: number
           slug?: string
           source_url?: string | null
-          time_minutes?: number | null
           updated_at?: string
         }
         Relationships: []

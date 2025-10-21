@@ -74,7 +74,8 @@ Algorytm dobiera posiłki z bazy, których kaloryczność na porcję mieści si�
 
 - **Cel**: Oszczędność czasu użytkownika przez gotowanie raz na dwa dni.
 - **Zasada**: Jeśli wybrany przez algorytm przepis na obiad lub kolację ma więcej niż 1 porcję, ten sam posiłek jest automatycznie planowany w tym samym slocie na następny dzień.
-- Kaloryczność całego dania (np. na 2 porcje) jest rozkładana równomiernie na dwa dni. Całkowity bilans kaloryczny planu musi pozostać zachowany.
+- Jeśli przepis zawiera wiele porcji a użtykownik w trakcje planu zje tylko jego część, np: 2 porcje z 6, to taki posiłek powinien zostać oznaczony jako: "Ugotuj tylko 1/3"
+- Użytkownik może zjeść więcej niż jedna porcję przepisu na raz. Np: porcja przepisu to 250kcal, a według planu powininen zjeść 500kcal, to algorytm może zasugerować 2 porcje przepisu
 - Śniadania i przekąski domyślnie pozostają unikalne każdego dnia, chyba że analiza danych wykaże inaczej.
 - Algorytm dąży do braku powtórzeń tych samych przepisów w pozostałych slotach w ramach jednego planu.
 

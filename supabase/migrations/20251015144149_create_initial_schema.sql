@@ -120,13 +120,16 @@ create table public.plan_meals (
     recipe_id bigint not null references public.recipes(id) on delete restrict,
     calories_planned integer not null check (calories_planned > 0),
     portion_multiplier numeric(4,2) not null default 1.00 check (portion_multiplier > 0),
+    portions_to_cook integer null check (portions_to_cook is null or portions_to_cook > 0),
     multi_portion_group_id uuid null,
     is_leftover boolean not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (plan_day_id, slot),
     check (multi_portion_group_id is null or slot in ('lunch','dinner')),
-    check (is_leftover = false or multi_portion_group_id is not null)
+    check (is_leftover = false or multi_portion_group_id is not null),
+    check (portions_to_cook is null or is_leftover = false),
+    check (multi_portion_group_id is null or portions_to_cook is null or is_leftover = false)
 );
 
 -- enable row level security for the plan_meals table
@@ -154,9 +157,73 @@ create index plan_days_plan_id_date_idx on public.plan_days (plan_id, date);
 create index plan_meals_plan_id_slot_status_idx on public.plan_meals (plan_id, slot, status);
 create index plan_meals_multi_portion_group_id_idx on public.plan_meals (multi_portion_group_id);
 create index plan_meals_plan_id_slot_planned_idx on public.plan_meals (plan_id, slot) where (status = 'planned');
+create index plan_meals_portions_to_cook_idx on public.plan_meals (portions_to_cook) where (portions_to_cook is not null);
 
 
 -- create trigger functions and triggers for data integrity
+
+-- trigger function: fn_calculate_plan_meal_calories
+-- automatically calculates calories_planned based on recipe calories and portion_multiplier.
+-- formula: calories_planned = recipes.calories_kcal * portion_multiplier
+create or replace function public.fn_calculate_plan_meal_calories()
+returns trigger as $$
+declare
+    v_calories_per_portion integer;
+begin
+    -- get the calories per portion from the recipe
+    select calories_kcal into v_calories_per_portion
+    from public.recipes
+    where id = new.recipe_id;
+
+    if not found then
+        raise exception 'recipe % not found', new.recipe_id;
+    end if;
+
+    -- calculate and set the planned calories
+    new.calories_planned := (v_calories_per_portion * new.portion_multiplier)::integer;
+
+    return new;
+end;
+$$ language plpgsql;
+
+-- trigger: calculate_plan_meal_calories_trigger
+-- executes before insert or update on plan_meals to calculate calories.
+create trigger calculate_plan_meal_calories_trigger
+before insert or update of recipe_id, portion_multiplier on public.plan_meals
+for each row execute function public.fn_calculate_plan_meal_calories();
+
+
+-- trigger function: fn_validate_portion_multiplier
+-- ensures that portion_multiplier does not exceed the recipe's portions.
+create or replace function public.fn_validate_portion_multiplier()
+returns trigger as $$
+declare
+    v_portions integer;
+begin
+    -- get the portions from the recipe
+    select portions into v_portions
+    from public.recipes
+    where id = new.recipe_id;
+
+    if not found then
+        raise exception 'recipe % not found', new.recipe_id;
+    end if;
+
+    -- validate that portion_multiplier does not exceed recipe portions
+    if new.portion_multiplier > v_portions then
+        raise exception 'portion_multiplier (%) cannot exceed recipe portions (%)', new.portion_multiplier, v_portions;
+    end if;
+
+    return new;
+end;
+$$ language plpgsql;
+
+-- trigger: validate_portion_multiplier_trigger
+-- executes before insert or update on plan_meals to validate portion_multiplier.
+create trigger validate_portion_multiplier_trigger
+before insert or update of recipe_id, portion_multiplier on public.plan_meals
+for each row execute function public.fn_validate_portion_multiplier();
+
 
 -- trigger function: fn_set_plan_meals_denorm
 -- automatically populates denormalized plan_id and user_id in plan_meals.
@@ -220,12 +287,17 @@ for each row execute function public.fn_validate_plan_meal_slot();
 
 -- trigger function: fn_enforce_multi_portion_group
 -- enforces business rules for multi-portion meals (e.g., leftovers).
+-- v2: validates that both meals in a group have identical portion_multiplier
+--     and that one is day 1 (portions_to_cook set) and one is day 2 (is_leftover true).
 create or replace function public.fn_enforce_multi_portion_group()
 returns trigger as $$
 declare
     v_group_id uuid;
     v_record_count integer;
-    v_portion_sum numeric;
+    v_is_leftover_count integer;
+    v_portions_to_cook_count integer;
+    v_portion_multiplier_min numeric;
+    v_portion_multiplier_max numeric;
 begin
     -- determine the group id to check
     if tg_op = 'DELETE' then
@@ -242,23 +314,39 @@ begin
     -- check constraints for the group
     select
         count(*),
-        sum(portion_multiplier)
+        count(*) filter (where is_leftover = true),
+        count(*) filter (where portions_to_cook is not null),
+        min(portion_multiplier),
+        max(portion_multiplier)
     into
         v_record_count,
-        v_portion_sum
+        v_is_leftover_count,
+        v_portions_to_cook_count,
+        v_portion_multiplier_min,
+        v_portion_multiplier_max
     from
         public.plan_meals
     where
         multi_portion_group_id = v_group_id;
 
-    -- rule 1: a group cannot have more than 2 meals
-    if v_record_count > 2 then
-        raise exception 'multi-portion group % cannot exceed 2 meals.', v_group_id;
+    -- rule 1: a group must have exactly 2 meals
+    if v_record_count != 2 then
+        raise exception 'multi-portion group % must have exactly 2 meals (has %).', v_group_id, v_record_count;
     end if;
 
-    -- rule 2: the sum of portions in a group must equal 1.0
-    if v_record_count > 0 and abs(v_portion_sum - 1.0) > 0.001 then
-        raise exception 'sum of portion_multiplier in group % must be 1.0 (is %).', v_group_id, v_portion_sum;
+    -- rule 2: exactly one meal must have is_leftover = false (day 1)
+    if v_is_leftover_count != 1 then
+        raise exception 'multi-portion group % must have exactly 1 leftover meal (has %).', v_group_id, v_is_leftover_count;
+    end if;
+
+    -- rule 3: exactly one meal must have portions_to_cook set (day 1)
+    if v_portions_to_cook_count != 1 then
+        raise exception 'multi-portion group % must have exactly 1 meal with portions_to_cook set (has %).', v_group_id, v_portions_to_cook_count;
+    end if;
+
+    -- rule 4: both meals in the group must have identical portion_multiplier
+    if abs(v_portion_multiplier_max - v_portion_multiplier_min) > 0.001 then
+        raise exception 'multi-portion group % meals must have identical portion_multiplier (min: %, max: %).', v_group_id, v_portion_multiplier_min, v_portion_multiplier_max;
     end if;
 
     return null; -- result is ignored since this is an after trigger
