@@ -1,4 +1,9 @@
-# API Endpoint Implementation Plan: POST /api/plans/generate
+# API Endpoint Implementation Plan: POST /api/plans/generate (v2 Schema)
+
+**Updated**: 2025-10-20
+**Schema Version**: v2 (Multi-portion meal support with portions_to_cook)
+
+---
 
 ## 1. Endpoint Overview
 
@@ -7,14 +12,16 @@ The `POST /api/plans/generate` endpoint enables authenticated users to generate 
 - Create a plan record with calculated end date
 - Generate meal plan days spanning the requested duration
 - Select and allocate recipes to meal slots (breakfast, lunch, dinner, snacks)
-- Handle multi-portion meals with proper portion multipliers
+- **Handle multi-portion meals with proper v2 semantics** (portions_to_cook, is_leftover, identical portion_multiplier)
 - Enforce the business rule of one active plan per user
+- Enforce multi-portion constraints via database triggers
 
 **Key Characteristics:**
 - **Authenticated endpoint**: Requires valid Supabase session
 - **User-scoped**: Plans are created exclusively for the authenticated user
 - **Atomic operation**: All plan data is created within a single transaction
 - **Conflict prevention**: Enforces constraint that only one active plan can exist per user
+- **v2 Schema Compliant**: All portion_multiplier calculations, portions_to_cook assignments, and multi-portion constraints follow v2 semantics
 
 ---
 
@@ -81,14 +88,14 @@ export const createPlanCommandSchema = z.object({
     .positive('daily_calories must be a positive number')
     .min(800, 'daily_calories must be at least 800')
     .max(6000, 'daily_calories must not exceed 6000'),
-  
+
   plan_length_days: z
     .number()
     .int()
     .positive('plan_length_days must be a positive number')
     .min(1, 'plan_length_days must be at least 1 day')
     .max(365, 'plan_length_days must not exceed 365 days'),
-  
+
   start_date: z
     .string()
     .refine(
@@ -119,7 +126,7 @@ Parse JSON request body
   ↓
 [Business Logic] Check for existing active plan → 409 if found
   ↓
-[Service] Generate meal plan
+[Service] Generate meal plan (v2 semantics)
 ```
 
 ---
@@ -185,7 +192,7 @@ Parse JSON request body
 
 ### Input DTO
 
-**File**: `src/types.ts` (already defined)
+**File**: `src/types.ts`
 
 ```typescript
 export type CreatePlanCommand = {
@@ -197,7 +204,7 @@ export type CreatePlanCommand = {
 
 ### Output DTO
 
-**File**: `src/types.ts` (already defined)
+**File**: `src/types.ts`
 
 ```typescript
 export type PlanDTO = Pick<
@@ -218,15 +225,32 @@ export type PlanDayResponse = {
   slot_targets: SlotTargetResponse[]
 }
 
+// 🔄 UPDATED for v2 semantics
 export type MealResponse = {
   id: number
   slot: Enums<'meal_slot'>
   status: Enums<'meal_status'>
   calories_planned: number
-  portion_multiplier: number
+  portion_multiplier: number           // 🔄 Now: actual portions to eat (e.g., 2.4, 3.0)
+  portions_to_cook: number | null      // 🆕 NEW: Set for day 1 (cooking day), NULL for day 2 (leftovers)
   multi_portion_group_id: string | null
-  is_leftover: boolean
+  is_leftover: boolean                 // true = day 2 (leftovers), false = day 1 (cooking)
   recipe: RecipeInMealResponse
+}
+
+// Helper types
+export type SlotTargetResponse = {
+  slot: Enums<'meal_slot'>
+  calories_target: number
+}
+
+export type RecipeInMealResponse = {
+  id: number
+  name: string
+  image_url: string | null
+  time_minutes: number | null
+  source_url: string | null
+  available_slots: Enums<'meal_slot'>[]
 }
 ```
 
@@ -237,11 +261,11 @@ export type MealResponse = {
 ### High-Level Flow Diagram
 
 ```
-┌─────────────────────────────────────────────┐
-│  Client: POST /api/plans/generate           │
-│  Body: { daily_calories, plan_length_days,  │
-│          start_date }                       │
-└────────────────┬────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  Client: POST /api/plans/generate       │
+│  Body: { daily_calories, plan_length_.. │
+│          start_date }                   │
+└────────────────┬────────────────────────┘
                  │
                  ▼
         ┌────────────────────┐
@@ -269,7 +293,9 @@ export type MealResponse = {
         │    - Call plan generation algorithm  │
         │    - Allocate recipes to days/slots   │
         │    - Calculate portion multipliers    │
-        │    - Create plan + days + meals       │
+        │    - Set portions_to_cook per day     │
+        │    - Create multi-portion groups      │
+        │    - Validate v2 constraints (DB)     │
         │    - Commit transaction               │
         └────────┬──────────────────────────────┘
                  │
@@ -297,10 +323,21 @@ Database Transaction
 └─ Create 'plan_meals' records
    └─ For each meal slot:
       ├─ Select recipe matching slot and caloric target
-      ├─ Insert meal with portion_multiplier
-      ├─ If multi-portion meal:
-      │  └─ Set multi_portion_group_id and is_leftover flags
-      └─ Handle recipe allocation across days
+      ├─ Calculate portion_multiplier = target / recipe.calories_kcal
+      ├─ Check if multi-portion candidate (lunch/dinner, consecutive days available)
+      │
+      ├─ If MULTI-PORTION meal:
+      │  ├─ Create multi_portion_group_id (UUID)
+      │  │
+      │  ├─ Day 1 (COOKING):
+      │  │  └─ INSERT { portion_multiplier, portions_to_cook: recipe.portions, is_leftover: FALSE }
+      │  │
+      │  └─ Day 2 (LEFTOVERS):
+      │     └─ INSERT { portion_multiplier (SAME!), portions_to_cook: NULL, is_leftover: TRUE }
+      │        (Skip next day in main loop)
+      │
+      └─ If SINGLE-PORTION meal:
+         └─ INSERT { portion_multiplier, portions_to_cook: recipe.portions, is_leftover: FALSE }
 ```
 
 ### Service Layer Responsibilities
@@ -318,22 +355,202 @@ export async function generatePlan(
 
 **Responsibilities**:
 1. **Validation**: Check user doesn't already have active plan
-2. **Calculation**: 
-   - Calculate `end_date` from `start_date` and `plan_length_days`
-   - Distribute daily calories across meal slots using algorithm
-3. **Recipe Selection**: 
-   - Query recipes matching caloric targets per slot
-   - Apply meal slot constraints (breakfast != dinner)
-4. **Transaction Management**: 
-   - Execute atomic database transaction
-   - Rollback on any failure
-5. **Error Handling**: 
-   - Wrap Supabase errors in custom exceptions
-   - Provide meaningful error messages
+2. **Calculation**:
+    - Calculate `end_date` from `start_date` and `plan_length_days`
+    - Distribute daily calories across meal slots using algorithm
+3. **Recipe Selection**:
+    - Query recipes matching caloric targets per slot
+    - Apply meal slot constraints (breakfast != dinner)
+    - Apply portion constraints (multi-portion only for lunch/dinner)
+4. **Multi-Portion Logic** (v2 NEW):
+    - Identify consecutive days available for multi-portion meals
+    - Calculate identical `portion_multiplier` for both days
+    - Set `portions_to_cook = recipe.portions` for day 1, `NULL` for day 2
+    - Set `is_leftover = FALSE` for day 1, `TRUE` for day 2
+5. **Transaction Management**:
+    - Execute atomic database transaction
+    - Rollback on any failure
+6. **Error Handling**:
+    - Wrap Supabase errors in custom exceptions
+    - Provide meaningful error messages
 
 ---
 
-## 7. Security Considerations
+## 7. Algorithm: Plan Generation with v2 Semantics
+
+### Phase 1: Calculate Slot Targets
+
+```
+Input: daily_calories = 2000
+
+Output:
+- breakfast_target = 2000 × 0.20 = 400 kcal
+- lunch_target = 2000 × 0.30 = 600 kcal
+- dinner_target = 2000 × 0.30 = 600 kcal
+- snack_target = 2000 × 0.20 = 400 kcal
+```
+
+### Phase 2: Iterate Over Each Day
+
+```
+For day = 1 to plan_length_days:
+  date = start_date + (day - 1) days
+
+  For slot IN ['breakfast', 'lunch', 'dinner', 'snack']:
+    target = slot_targets[slot]
+
+    → Call: selectRecipeAndCreateMeal(day, slot, target)
+```
+
+### Phase 3: Select Recipe and Create Meal (DETAILED v2 LOGIC)
+
+```typescript
+/**
+ * selectRecipeAndCreateMeal(day, slot, target_calories)
+ *
+ * Returns: { meal_created: boolean, recipe_used: Recipe, skip_next_day: boolean }
+ */
+function selectRecipeAndCreateMeal(day, slot, target) {
+  // Step 1: Query suitable recipes
+  // ================================
+  recipes = query(`
+    SELECT r.* FROM recipes r
+    WHERE r.is_active = TRUE
+      AND r.calories_kcal BETWEEN ${target * 0.8} AND ${target * 1.2}
+      AND EXISTS (
+        SELECT 1 FROM recipe_slots rs
+        WHERE rs.recipe_id = r.id AND rs.slot = '${slot}'
+      )
+    ORDER BY ABS(r.calories_kcal - ${target}) ASC
+    LIMIT 100
+  `)
+
+  if (recipes.length === 0) {
+    throw new ServerError(`No suitable recipe for ${slot} with ${target} calories`)
+  }
+
+  // Step 2: Select best matching recipe
+  // ====================================
+  recipe = recipes[0]  // Closest match to target
+
+  // Step 3: Calculate portion_multiplier (v2 SEMANTICS!)
+  // ====================================================
+  // Formula: portion_multiplier = target_calories / recipe.calories_kcal
+  // This represents: "How many portions of this recipe to eat"
+  // Example: 600 / 250 = 2.4 portions
+
+  portion_multiplier = ROUND(target / recipe.calories_kcal, 1)
+
+  // Step 4: Validate portion_multiplier
+  // ====================================
+  // Constraint: portion_multiplier <= recipe.portions
+  // (Can't eat more portions than recipe has!)
+
+  if (portion_multiplier > recipe.portions) {
+    throw new ValidationError(
+      `Portion multiplier ${portion_multiplier} exceeds recipe max ${recipe.portions}`
+    )
+  }
+
+  // Step 5: Check if this is a multi-portion CANDIDATE
+  // ===================================================
+  // Multi-portion criteria:
+  // - Slot must be lunch or dinner (breakfast/snack are single-day only)
+  // - Recipe must have at least 2 portions
+  // - Next day must be available (day < plan_length_days)
+  // - Next day's slot must not be filled yet
+
+  is_multi_portion_candidate = (
+    slot IN ['lunch', 'dinner'] AND
+    recipe.portions >= 2 AND
+    day < plan_length_days AND
+    meal_slots[day + 1][slot] === NULL
+  )
+
+  if (is_multi_portion_candidate) {
+    // Step 6a: MULTI-PORTION PATH
+    // ============================
+
+    multi_portion_group_id = UUID.generate()
+
+    // Day 1: Cooking day
+    // ──────────────────
+    calories_planned = ROUND(recipe.calories_kcal * portion_multiplier, 0)
+
+    INSERT plan_meals {
+      plan_day_id: plan_days[day].id,
+      recipe_id: recipe.id,
+      slot: slot,
+      status: 'planned',
+      calories_planned: calories_planned,  // = target ± tolerance
+      portion_multiplier: portion_multiplier,  // e.g., 2.4
+      portions_to_cook: recipe.portions,       // e.g., 6 (gotuj całą receptę!)
+      multi_portion_group_id: multi_portion_group_id,
+      is_leftover: FALSE  // Day 1 = cooking, not leftovers
+    }
+
+    // Day 2: Leftovers day (SAME portion_multiplier!)
+    // ──────────────────────────────────────────────
+    // Important: IDENTICAL portion_multiplier as Day 1!
+    // This is the KEY CHANGE in v2 semantics
+
+    INSERT plan_meals {
+      plan_day_id: plan_days[day + 1].id,
+      recipe_id: recipe.id,
+      slot: slot,
+      status: 'planned',
+      calories_planned: calories_planned,  // = SAME as day 1
+      portion_multiplier: portion_multiplier,  // IDENTICAL! (e.g., 2.4)
+      portions_to_cook: NULL,                  // Day 2 = don't cook, use leftovers
+      multi_portion_group_id: multi_portion_group_id,
+      is_leftover: TRUE  // Day 2 = leftovers, not cooking
+    }
+
+    // Mark next day slot as filled
+    meal_slots[day + 1][slot] = 'filled_by_multi_portion'
+
+    return { meal_created: TRUE, recipe_used: recipe, skip_next_day: TRUE }
+
+  } else {
+    // Step 6b: SINGLE-PORTION PATH
+    // =============================
+
+    calories_planned = ROUND(recipe.calories_kcal * portion_multiplier, 0)
+
+    INSERT plan_meals {
+      plan_day_id: plan_days[day].id,
+      recipe_id: recipe.id,
+      slot: slot,
+      status: 'planned',
+      calories_planned: calories_planned,
+      portion_multiplier: portion_multiplier,
+      portions_to_cook: recipe.portions,  // Always cook the full recipe
+      multi_portion_group_id: NULL,
+      is_leftover: FALSE  // Single-portion meals are not leftovers
+    }
+
+    return { meal_created: TRUE, recipe_used: recipe, skip_next_day: FALSE }
+  }
+}
+```
+
+### Phase 4: Validate Multi-Portion Constraints (Database)
+
+The database triggers automatically validate:
+
+```sql
+-- fn_enforce_multi_portion_group() trigger checks:
+CHECK (
+  COUNT(*) = 2  -- Exactly 2 meals in group
+  AND SUM(CASE WHEN is_leftover = FALSE THEN 1 ELSE 0 END) = 1  -- Only 1 cooking day
+  AND SUM(CASE WHEN portions_to_cook IS NOT NULL THEN 1 ELSE 0 END) = 1  -- Only 1 with portions_to_cook
+  AND MIN(portion_multiplier) = MAX(portion_multiplier)  -- Identical multipliers!
+)
+```
+
+---
+
+## 8. Security Considerations
 
 ### Authentication & Authorization
 
@@ -366,39 +583,13 @@ const userId = context.locals.session.user.id
 - ✓ No string concatenation for SQL
 - ✓ Zod type coercion prevents bypass attempts
 
-### Rate Limiting
-
-**Implementation** (Recommended in future):
-```typescript
-// Consider adding per-endpoint rate limiting:
-// - 5 plan generations per user per hour
-// - Track by user_id + timestamp
-// - Return 429 Too Many Requests if exceeded
-```
-
-**Rationale**:
-- Plan generation is CPU/IO intensive (recipe selection algorithm)
-- Prevents abuse and resource exhaustion
-- Can be implemented via:
-  - Supabase custom middleware
-  - Redis-backed rate limiter
-  - Database-backed rate limiter table
-
 ### Row-Level Security (RLS)
 
 **Database Policy** (Supabase):
 ```sql
--- users can only see their own plans
-CREATE POLICY "users_can_only_view_own_plans" ON plans
-  FOR SELECT USING (auth.uid() = user_id)
-
 -- users can only create plans for themselves
 CREATE POLICY "users_can_only_create_own_plans" ON plans
   FOR INSERT WITH CHECK (auth.uid() = user_id)
-
--- users can only update their own plans
-CREATE POLICY "users_can_only_update_own_plans" ON plans
-  FOR UPDATE USING (auth.uid() = user_id)
 ```
 
 **Application Level**:
@@ -415,11 +606,19 @@ CREATE POLICY "users_can_only_update_own_plans" ON plans
 
 **Encryption**:
 - Supabase handles TLS/encryption in transit
-- Consider encrypting sensitive plan notes if feature added later
+
+### Rate Limiting (Recommended Future)
+
+```typescript
+// Consider adding per-endpoint rate limiting:
+// - 5 plan generations per user per hour
+// - Track by user_id + timestamp
+// - Return 429 Too Many Requests if exceeded
+```
 
 ---
 
-## 8. Error Handling Strategy
+## 9. Error Handling Strategy
 
 ### Validation Error Handling (400)
 
@@ -467,7 +666,33 @@ if (existingPlan.data) {
 }
 ```
 
-**Custom Error Class**:
+### v2-Specific Error Handling (400/500)
+
+```typescript
+// 🆕 Multi-portion validation error
+if (portion_multiplier > recipe.portions) {
+  throw new ValidationError(
+    `Cannot select recipe: portion_multiplier (${portion_multiplier}) exceeds recipe portions (${recipe.portions})`
+  )
+}
+
+// 🆕 No suitable recipe found
+if (!recipe) {
+  throw new ServerError(
+    `No suitable recipe found for ${slot} with ~${target} calories (±20%)`
+  )
+}
+
+// 🆕 Multi-portion constraint violation (from database trigger)
+if (error.message.includes('multi_portion_group')) {
+  throw new ServerError(
+    'Database constraint violation: Multi-portion group rules violated'
+  )
+}
+```
+
+### Custom Error Classes
+
 ```typescript
 // src/lib/errors.ts
 export class ConflictError extends Error {
@@ -481,6 +706,13 @@ export class ValidationError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'ValidationError'
+  }
+}
+
+export class ServerError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ServerError'
   }
 }
 ```
@@ -501,7 +733,22 @@ try {
     stack: error.stack,
     timestamp: new Date().toISOString()
   })
-  
+
+  // Return appropriate error code
+  if (error instanceof ConflictError) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 409, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  if (error instanceof ValidationError) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
   return new Response(
     JSON.stringify({ error: 'Failed to generate meal plan' }),
     { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -509,65 +756,34 @@ try {
 }
 ```
 
-### Error Logging
-
-**Structured Logging Format**:
-```typescript
-const logError = (context: {
-  endpoint: string
-  userId: string
-  error: Error
-  requestBody?: unknown
-  statusCode: number
-}) => {
-  console.error({
-    level: 'error',
-    timestamp: new Date().toISOString(),
-    endpoint: context.endpoint,
-    userId: context.userId,
-    statusCode: context.statusCode,
-    errorMessage: context.error.message,
-    errorStack: context.error.stack,
-    requestBody: context.requestBody // Exclude sensitive fields
-  })
-}
-```
-
-### Error Recovery Strategies
-
-| Error Type | Strategy | Outcome |
-|-----------|----------|---------|
-| Validation Error | Return immediately with specific message | User corrects input |
-| Authentication Missing | Return 401 | User logs in |
-| Existing Active Plan | Return 409 with action message | User archives existing plan first |
-| Recipe Selection Fails | Fallback to default recipes | Plan still generated with defaults |
-| Database Connection Fails | Retry with exponential backoff | Automatic recovery or error after retries |
-| Transaction Deadlock | Retry entire operation (up to 3x) | Automatic recovery |
-
 ---
 
-## 9. Performance Considerations
+## 10. Performance Considerations
 
 ### Optimization Strategies
 
 #### 1. Database Query Optimization
 ```sql
 -- Ensure indexes exist for common queries
-CREATE INDEX idx_plans_user_id_state 
+CREATE INDEX idx_plans_user_id_state
   ON plans(user_id, state);
 
-CREATE INDEX idx_recipes_calories 
-  ON recipes(calories_per_serving);
+CREATE INDEX idx_recipes_calories
+  ON recipes(calories_kcal);
 
-CREATE INDEX idx_recipes_available_slots 
+CREATE INDEX idx_recipes_available_slots
   ON recipes(available_slots);
+
+CREATE INDEX idx_recipe_slots_slot_recipe_id
+  ON recipe_slots(slot, recipe_id);
 ```
 
 #### 2. Recipe Selection Algorithm
 - Use efficient filtering: `available_slots` contains requested slot
 - Narrow by caloric range: target ± 20% of slot calories
 - Pre-filter in database (SQL) before application logic
-- Cache recipe metadata if list is large
+- Sort by closest match to target calories
+- Limit result set (100 recipes max to avoid large data transfers)
 
 #### 3. Batch Operations
 ```typescript
@@ -580,6 +796,15 @@ const days = Array.from({ length: plan_length_days }, (_, i) => ({
 await supabase
   .from('plan_days')
   .insert(days)
+
+// Insert all slot_targets in single batch
+const targets = generateSlotTargets(newPlanId, dayIds, daily_calories)
+await supabase
+  .from('plan_day_slot_targets')
+  .insert(targets)
+
+// Meals are inserted one-by-one in main generation loop
+// (because each requires recipe selection)
 ```
 
 #### 4. Transaction Scope
@@ -591,10 +816,11 @@ await supabase
 
 | Bottleneck | Root Cause | Solution |
 |-----------|-----------|----------|
-| Slow recipe selection | Large recipe table without indexes | Add indexes on `available_slots`, `calories_per_serving` |
+| Slow recipe selection | Large recipe table without indexes | Add indexes on `available_slots`, `calories_kcal` |
 | High transaction lock time | Multiple sequential inserts | Batch insert all records simultaneously |
-| N+1 query problem | Fetching recipes iteratively | Single query with JOIN to fetch all recipes |
+| N+1 query problem | Fetching recipes iteratively | Single query with JOIN to fetch all recipes upfront |
 | Long endpoint response time | Synchronous plan generation | Optionally offload to background job (future enhancement) |
+| Multi-portion lookup | Scanning future days repeatedly | Cache meal_slots[day][slot] status in memory |
 
 ### Caching Opportunities
 
@@ -602,11 +828,13 @@ await supabase
 // Cache frequently-accessed recipe data
 const recipeCache = new Map<string, Recipe[]>()
 
-// Cache key pattern: "breakfast_2000" (slot_calories)
-const getCachedRecipes = (slot: string, calorieRange: number) => {
-  const key = `${slot}_${calorieRange}`
+// Cache key pattern: "breakfast_2000" (slot_target)
+const getCachedRecipes = (slot: string, target: number) => {
+  const key = `${slot}_${Math.round(target / 100) * 100}`  // Round to 100 boundary
   if (!recipeCache.has(key)) {
     // Query and cache
+    const recipes = queryRecipesBySlotAndTarget(slot, target)
+    recipeCache.set(key, recipes)
   }
   return recipeCache.get(key)
 }
@@ -627,11 +855,11 @@ const getCachedRecipes = (slot: string, calorieRange: number) => {
 
 ---
 
-## 10. Implementation Steps
+## 11. Implementation Steps
 
 ### Phase 1: Setup & Validation (Steps 1-3)
 
-#### Step 1: Create Zod Validation Schema
+#### Step 1: Create/Update Zod Validation Schema
 **File**: `src/lib/schemas/plan.ts`
 
 Create validation schema for `CreatePlanCommand` with:
@@ -643,10 +871,10 @@ Create validation schema for `CreatePlanCommand` with:
 
 ---
 
-#### Step 2: Create Custom Error Types
+#### Step 2: Create/Update Custom Error Types
 **File**: `src/lib/errors.ts`
 
-Define error classes:
+Define or update error classes:
 - `ValidationError` (400)
 - `AuthenticationError` (401)
 - `ConflictError` (409)
@@ -661,7 +889,7 @@ Each error should include:
 
 ---
 
-#### Step 3: Create Plans Service Layer
+#### Step 3: Create Plans Service Layer (v2 UPDATED)
 **File**: `src/lib/services/plans.service.ts`
 
 Implement core function:
@@ -673,27 +901,33 @@ export async function generatePlan(
 ): Promise<PlanDTO>
 ```
 
-**Responsibilities**:
+**Responsibilities** (v2 Updated):
 1. Validate no existing active plan
 2. Calculate end_date
-3. Implement recipe selection algorithm
+3. **Implement v2-compliant recipe selection algorithm** (see Section 7)
 4. Create database transaction
 5. Insert plan + days + meals + slot_targets
 6. Return PlanDTO
 
 **Key Logic**:
 - Distribute daily_calories across meal slots:
-  - Breakfast: 25% of daily
-  - Lunch: 35% of daily
-  - Dinner: 35% of daily
-  - Snacks: 5% of daily
+    - Breakfast: 20% of daily
+    - Lunch: 30% of daily
+    - Dinner: 30% of daily
+    - Snacks: 20% of daily
 - For each slot, select recipe within ±20% of target calories
-- Handle multi-portion meals (length meals used as leftovers)
+- **Calculate portion_multiplier** = target / recipe.calories_kcal
+- **Handle multi-portion meals**:
+    - Identify lunch/dinner slots with consecutive days available
+    - Use identical `portion_multiplier` for both days
+    - Set `portions_to_cook = recipe.portions` for day 1, `NULL` for day 2
+    - Set `is_leftover = FALSE` for day 1, `TRUE` for day 2
+- Database triggers validate multi-portion constraints automatically
 
 **Error Handling**:
 - Throw `ConflictError` if active plan exists (409)
-- Throw custom errors for database failures (500)
-- Validate recipe availability (400 if insufficient recipes)
+- Throw `ValidationError` if portion_multiplier invalid (400)
+- Throw `ServerError` for database failures (500)
 
 **Deliverable**: Testable, pure service function with clear interface
 
@@ -701,7 +935,7 @@ export async function generatePlan(
 
 ### Phase 2: Endpoint Implementation (Steps 4-5)
 
-#### Step 4: Create API Endpoint Handler
+#### Step 4: Create API Endpoint Handler (v2 UPDATED)
 **File**: `src/pages/api/plans/generate.ts`
 
 Implement POST handler:
@@ -711,28 +945,56 @@ export const prerender = false
 
 export const POST: APIRoute = async (context) => {
   // 1. Check authentication
+  if (!context.locals.session?.user?.id) {
+    return new Response(
+      JSON.stringify({ error: 'Authentication required' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const userId = context.locals.session.user.id
+
   // 2. Validate input with Zod
+  let command: CreatePlanCommand
+  try {
+    command = createPlanCommandSchema.parse(await context.request.json())
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: error.issues[0].message }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    throw error
+  }
+
   // 3. Call plans.generatePlan service
-  // 4. Return 201 with PlanDTO or error
-}
-```
+  try {
+    const plan = await generatePlan(context.locals.supabase, userId, command)
+    return new Response(JSON.stringify(plan), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  } catch (error) {
+    if (error instanceof ConflictError) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    if (error instanceof ValidationError) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
 
-**Handler Flow**:
-1. Extract `user_id` from `context.locals.session.user.id`
-2. Return 401 if no session
-3. Parse JSON body
-4. Validate with `createPlanCommandSchema.parse()`
-5. Catch `ZodError` → return 400
-6. Call `generatePlan(supabase, userId, command)`
-7. Catch `ConflictError` → return 409
-8. Catch other errors → return 500
-9. Return 201 with `PlanDTO`
-
-**Response Headers**:
-```typescript
-{
-  'Content-Type': 'application/json',
-  'Location': `/api/plans/${plan.id}` // Optional: link to new resource
+    console.error('Plan generation failed:', error)
+    return new Response(
+      JSON.stringify({ error: 'Failed to generate meal plan' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 }
 ```
 
@@ -746,15 +1008,38 @@ export const POST: APIRoute = async (context) => {
 Add structured logging:
 
 ```typescript
-console.log({
-  level: 'info',
-  timestamp: new Date().toISOString(),
-  endpoint: 'POST /api/plans/generate',
-  userId,
-  dailyCalories: command.daily_calories,
-  planLengthDays: command.plan_length_days,
-  duration_ms: endTime - startTime
-})
+const startTime = Date.now()
+
+try {
+  // ... plan generation logic
+
+  const duration = Date.now() - startTime
+  console.log({
+    level: 'info',
+    timestamp: new Date().toISOString(),
+    endpoint: 'POST /api/plans/generate',
+    userId,
+    dailyCalories: command.daily_calories,
+    planLengthDays: command.plan_length_days,
+    duration_ms: duration,
+    status: 'success'
+  })
+
+} catch (error) {
+  const duration = Date.now() - startTime
+  console.error({
+    level: 'error',
+    timestamp: new Date().toISOString(),
+    endpoint: 'POST /api/plans/generate',
+    userId,
+    dailyCalories: command.daily_calories,
+    planLengthDays: command.plan_length_days,
+    duration_ms: duration,
+    status: 'error',
+    errorMessage: error.message
+  })
+  throw error
+}
 ```
 
 **Deliverable**: Operational visibility into plan generation
@@ -770,9 +1055,11 @@ Test cases:
 
 **Valid requests**:
 - ✓ Normal plan generation (7 days, 2000 calories)
-- ✓ Short plan (1 day)
-- ✓ Long plan (365 days)
-- ✓ Min/max calories (800, 6000)
+- ✓ Multi-portion meals are correctly paired
+- ✓ portion_multiplier is calculated correctly
+- ✓ portions_to_cook is set for day 1, NULL for day 2
+- ✓ is_leftover is FALSE for day 1, TRUE for day 2
+- ✓ Multi-portion group constraint is enforced
 
 **Invalid requests**:
 - ✗ Missing daily_calories → 400
@@ -800,8 +1087,9 @@ Test cases:
 
 Add section for `/api/plans/generate`:
 - Example curl request
-- Example response
+- Example response with multi-portion meals explained
 - Common error scenarios
+- v2 semantics explanation
 - Testing checklist
 
 **Deliverable**: Clear documentation for API consumers
@@ -815,6 +1103,7 @@ Add section for `/api/plans/generate`:
 - Manual testing in staging environment
 - Verify error responses and edge cases
 - Check performance (response time < 2s)
+- Verify multi-portion group creation and constraints
 - Monitor logs for errors in production
 
 **Validation Checklist**:
@@ -825,28 +1114,32 @@ Add section for `/api/plans/generate`:
 - [ ] Documentation updated
 - [ ] Security review completed (RLS, input validation)
 - [ ] Performance acceptable (< 2s response time)
+- [ ] Multi-portion meals generated correctly
+- [ ] portion_multiplier calculations verified
+- [ ] portions_to_cook values verified (recipe.portions for day 1, NULL for day 2)
+- [ ] is_leftover flags verified (FALSE for day 1, TRUE for day 2)
+- [ ] Database constraints enforced (triggers active)
 
 ---
 
-## 11. File Structure & Dependencies
+## 12. File Structure & Dependencies
 
 ### Files to Create/Modify
 
 ```
 src/
 ├── lib/
-│   ├── errors.ts                    [NEW]
+│   ├── errors.ts                    [NEW or UPDATE]
 │   ├── schemas/
-│   │   └── plan.ts                  [NEW]
+│   │   └── plan.ts                  [NEW or UPDATE]
 │   └── services/
-│       └── plans.service.ts         [NEW]
+│       └── plans.service.ts         [UPDATE with v2 logic]
 ├── pages/
 │   └── api/
 │       └── plans/
-│           ├── index.ts             [EXISTS - add GET for list]
-│           ├── generate.ts          [NEW - this endpoint]
-│           └── [id].ts              [EXISTS - add GET details]
-└── types.ts                         [UPDATE - add if needed]
+│           ├── index.ts             [EXISTS]
+│           └── generate.ts          [NEW or UPDATE]
+└── types.ts                         [UPDATE - add portions_to_cook to MealResponse]
 ```
 
 ### Key Imports
@@ -858,10 +1151,11 @@ import { createPlanCommandSchema } from '@/lib/schemas/plan'
 import { generatePlan } from '@/lib/services/plans.service'
 import type { SupabaseClient } from '@/db/supabase.client'
 import type { CreatePlanCommand, PlanDTO } from '@/types'
+import { ConflictError, ValidationError, ServerError } from '@/lib/errors'
 
 // Service layer
 import type { SupabaseClient } from '@/db/supabase.client'
-import { ConflictError, ServerError } from '@/lib/errors'
+import { ConflictError, ValidationError, ServerError } from '@/lib/errors'
 import type { CreatePlanCommand, PlanDTO } from '@/types'
 ```
 
@@ -877,7 +1171,7 @@ No new npm packages required.
 
 ---
 
-## 12. Environment & Configuration
+## 13. Environment & Configuration
 
 ### Required Environment Variables
 
@@ -896,27 +1190,109 @@ SUPABASE_SERVICE_ROLE_KEY=... (if using service role)
 - ✓ `plans`
 - ✓ `plan_days`
 - ✓ `plan_day_slot_targets`
-- ✓ `plan_meals`
+- ✓ `plan_meals` (with v2 columns: portions_to_cook, is_leftover)
 - ✓ `recipes`
+- ✓ `recipe_slots`
 
 **Required Enums**:
 - ✓ `plan_state` ('active', 'archived', 'completed')
-- ✓ `meal_slot` ('breakfast', 'lunch', 'dinner', 'snacks')
+- ✓ `meal_slot` ('breakfast', 'lunch', 'dinner', 'snack')
 - ✓ `meal_status` ('planned', 'prepared', 'consumed', 'skipped')
 
 **Required RLS Policies**:
 ```sql
 -- ON plans table
-CREATE POLICY "select_own_plans" ON plans 
+CREATE POLICY "select_own_plans" ON plans
   FOR SELECT USING (auth.uid() = user_id)
 
-CREATE POLICY "insert_own_plans" ON plans 
+CREATE POLICY "insert_own_plans" ON plans
   FOR INSERT WITH CHECK (auth.uid() = user_id)
+```
+
+**Required Triggers** (v2 Schema):
+- ✓ `fn_calculate_plan_meal_calories()` - Auto-calculates calories
+- ✓ `fn_validate_portion_multiplier()` - Ensures portion_multiplier <= recipe.portions
+- ✓ `fn_enforce_multi_portion_group()` - Validates multi-portion constraints
+- ✓ `fn_set_plan_meals_denorm()` - Denormalizes plan_id and user_id
+
+---
+
+## 14. v2 Schema Validation & Verification
+
+### Multi-Portion Group Constraints (Database Level)
+
+The database automatically enforces these constraints via `fn_enforce_multi_portion_group()` trigger:
+
+```sql
+-- Constraint 1: Exactly 2 meals in group
+COUNT(*) = 2
+
+-- Constraint 2: Only 1 cooking day
+COUNT(*) FILTER (WHERE is_leftover = FALSE) = 1
+
+-- Constraint 3: Only 1 with portions_to_cook set
+COUNT(*) FILTER (WHERE portions_to_cook IS NOT NULL) = 1
+
+-- Constraint 4: Identical portion_multiplier across pair
+MIN(portion_multiplier) = MAX(portion_multiplier)
+```
+
+### Example: Expected Data After Plan Generation
+
+**Input**:
+- daily_calories = 2000
+- plan_length_days = 3
+- Scenario: Gulasz 6-porcyjny (250 kcal/porcja)
+
+**Output for Day 1 & 2 (Multi-Portion)**:
+```
+Day 1 (MONDAY - Dinner):
+├─ slot: 'dinner'
+├─ recipe_id: 200 (Gulasz)
+├─ portion_multiplier: 2.4
+├─ calories_planned: 600  (250 × 2.4)
+├─ portions_to_cook: 6    ← Gotuj całą receptę!
+├─ is_leftover: FALSE
+├─ multi_portion_group_id: "uuid-abc-123"
+
+Day 2 (TUESDAY - Lunch):
+├─ slot: 'lunch'
+├─ recipe_id: 200 (Gulasz) ← SAME recipe
+├─ portion_multiplier: 2.4  ← IDENTICAL!
+├─ calories_planned: 600    ← IDENTICAL!
+├─ portions_to_cook: NULL   ← Don't cook, use leftovers
+├─ is_leftover: TRUE        ← Resztki!
+├─ multi_portion_group_id: "uuid-abc-123"  ← SAME group
+```
+
+**Database Verification Query**:
+```sql
+SELECT
+  pm.id,
+  pm.plan_day_id,
+  pd.date,
+  pm.slot,
+  pm.portion_multiplier,
+  pm.portions_to_cook,
+  pm.is_leftover,
+  pm.multi_portion_group_id,
+  r.name as recipe_name
+FROM plan_meals pm
+JOIN plan_days pd ON pm.plan_day_id = pd.id
+JOIN recipes r ON pm.recipe_id = r.id
+WHERE pm.multi_portion_group_id IS NOT NULL
+ORDER BY pm.multi_portion_group_id, pd.date;
+
+-- Result should show:
+-- - 2 rows per group
+-- - Same portion_multiplier for both
+-- - Only first row has portions_to_cook value
+-- - is_leftover differs (FALSE, TRUE)
 ```
 
 ---
 
-## 13. Validation & Quality Checklist
+## 15. Validation & Quality Checklist
 
 ### Pre-Deployment Validation
 
@@ -931,6 +1307,11 @@ CREATE POLICY "insert_own_plans" ON plans
 - [ ] **Performance**: Response time < 2 seconds
 - [ ] **Logging**: Errors logged with context for debugging
 - [ ] **Security**: No SQL injection, XSS, or auth bypass vulnerabilities
+- [ ] **v2 Semantics**: portion_multiplier calculations correct
+- [ ] **Multi-Portion**: Groups created with identical multipliers
+- [ ] **portions_to_cook**: Set correctly (recipe.portions day 1, NULL day 2)
+- [ ] **is_leftover**: Set correctly (FALSE day 1, TRUE day 2)
+- [ ] **Constraints**: Database triggers enforcing all rules
 
 ### Code Quality Standards
 
@@ -942,7 +1323,7 @@ CREATE POLICY "insert_own_plans" ON plans
 
 ---
 
-## 14. Appendix: Related Resources
+## 16. Appendix: Related Resources
 
 ### Database Schema Reference
 
@@ -954,24 +1335,27 @@ CREATE POLICY "insert_own_plans" ON plans
 - `end_date` DATE NOT NULL
 - `created_at`, `updated_at` TIMESTAMPTZ
 
-**plan_days table**:
-- Stores individual days within a plan
-- UNIQUE(plan_id, date)
-
-**plan_day_slot_targets table**:
-- Stores calorie targets per slot per day
-- UNIQUE(plan_day_id, slot)
-
-**plan_meals table**:
-- Stores actual meal assignments
-- Includes portion multiplier for multi-portion logic
-- UNIQUE(plan_day_id, slot)
+**plan_meals table (v2 updated)**:
+- `id` BIGSERIAL PRIMARY KEY
+- `plan_day_id` BIGINT (FK to plan_days)
+- `recipe_id` BIGINT (FK to recipes)
+- `slot` meal_slot ENUM
+- `status` meal_status DEFAULT 'planned'
+- `calories_planned` INTEGER
+- `portion_multiplier` NUMERIC(8,1) ← Now represents actual portions
+- **`portions_to_cook` INTEGER NULL** ← New in v2: recipe.portions or NULL
+- **`is_leftover` BOOLEAN DEFAULT FALSE** ← New in v2: distinguishes day 1 vs day 2
+- `multi_portion_group_id` UUID NULL
+- Constraints:
+    - `CHECK (portions_to_cook IS NULL OR is_leftover = FALSE)`
+    - `CHECK (portion_multiplier <= (SELECT portions FROM recipes WHERE id = recipe_id))`
 
 ### Type Definitions
 
 **CreatePlanCommand**: Input validation DTO
 **PlanDTO**: Response DTO for plan metadata
-**PlanDayResponse**: Nested day with meals (used by GET /api/plans/{id})
+**MealResponse**: Meal with v2-compliant fields (includes portions_to_cook)
+**RecipeInMealResponse**: Subset of recipe data
 
 ### Related Endpoints
 
@@ -989,3 +1373,6 @@ CREATE POLICY "insert_own_plans" ON plans
 - [Supabase TypeScript Client](https://supabase.com/docs/reference/typescript)
 - [Supabase Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
 
+---
+
+**Plan v2 ready for implementation!** ✅

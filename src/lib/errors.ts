@@ -26,6 +26,17 @@ export class AuthenticationError extends Error {
 }
 
 /**
+ * ForbiddenError (403 Forbidden)
+ * Thrown when user is authenticated but doesn't have permission to access resource
+ */
+export class ForbiddenError extends Error {
+  constructor(message: string = 'Access forbidden') {
+    super(message)
+    this.name = 'ForbiddenError'
+  }
+}
+
+/**
  * ConflictError (409 Conflict)
  * Thrown when operation violates business rules or constraints
  * Example: User already has an active plan
@@ -62,10 +73,11 @@ export class ServerError extends Error {
 /**
  * Check if error is a custom application error
  */
-export function isAppError(error: unknown): error is ValidationError | AuthenticationError | ConflictError | NotFoundError | ServerError {
+export function isAppError(error: unknown): error is ValidationError | AuthenticationError | ForbiddenError | ConflictError | NotFoundError | ServerError {
   return (
     error instanceof ValidationError ||
     error instanceof AuthenticationError ||
+    error instanceof ForbiddenError ||
     error instanceof ConflictError ||
     error instanceof NotFoundError ||
     error instanceof ServerError
@@ -78,6 +90,7 @@ export function isAppError(error: unknown): error is ValidationError | Authentic
 export function getErrorStatusCode(error: unknown): number {
   if (error instanceof ValidationError) return 400
   if (error instanceof AuthenticationError) return 401
+  if (error instanceof ForbiddenError) return 403
   if (error instanceof ConflictError) return 409
   if (error instanceof NotFoundError) return 404
   if (error instanceof ServerError) return 500

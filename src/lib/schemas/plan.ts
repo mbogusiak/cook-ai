@@ -66,3 +66,18 @@ export const getPlanIdSchema = z.object({
 })
 
 export type GetPlanIdInput = z.infer<typeof getPlanIdSchema>
+
+/**
+ * Validation schema for UpdatePlanCommand
+ * Validates input for PATCH /api/plans/{id} endpoint
+ * 
+ * Rules:
+ * - state: Must be one of the valid plan_state enum values
+ */
+export const updatePlanCommandSchema = z.object({
+  state: z.enum(['active', 'archived', 'cancelled', 'completed'], {
+    errorMap: () => ({ message: 'state must be one of: active, archived, cancelled, completed' })
+  })
+}).strict()
+
+export type UpdatePlanCommand = z.infer<typeof updatePlanCommandSchema>

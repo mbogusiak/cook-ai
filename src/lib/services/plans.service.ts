@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Enums } from '../../db/database.types'
 import type { CreatePlanCommand, PlanDTO } from '../../types'
-import { ConflictError, ServerError } from '../errors'
+import { ConflictError, ServerError, NotFoundError, ForbiddenError } from '../errors'
 import { randomUUID } from 'crypto'
 
 /**
@@ -621,5 +621,97 @@ export async function getPlanDetailsWithMeals(
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[getPlanDetailsWithMeals] Unexpected error:', errorMessage)
     throw new ServerError('Failed to fetch plan details', error instanceof Error ? error : undefined)
+  }
+}
+
+/**
+ * Update plan state
+ * 
+ * Steps:
+ * 1. Verify plan exists and belongs to user
+ * 2. Update plan state
+ * 3. Return updated plan DTO
+ * 
+ * @param supabase - Supabase client
+ * @param planId - ID of the plan to update
+ * @param userId - ID of the user (for authorization check)
+ * @param newState - New state value
+ * @returns Updated plan DTO
+ * @throws NotFoundError if plan doesn't exist
+ * @throws ForbiddenError if user doesn't own the plan
+ * @throws ServerError on database errors
+ */
+export async function updatePlanState(
+  supabase: SupabaseClient<Database>,
+  planId: number,
+  userId: string,
+  newState: Enums<'plan_state'>
+): Promise<PlanDTO> {
+  try {
+    // Step 1: Check if plan exists and verify ownership
+    const { data: existingPlan, error: fetchError } = await supabase
+      .from('plans')
+      .select('id, user_id')
+      .eq('id', planId)
+      .single()
+
+    if (fetchError) {
+      // Check if it's a "not found" error (PGRST116)
+      if ((fetchError as any).code === 'PGRST116') {
+        throw new NotFoundError('Plan not found')
+      }
+      console.error('[updatePlanState] Plan fetch error:', fetchError)
+      throw new ServerError('Failed to fetch plan', fetchError as any)
+    }
+
+    if (!existingPlan) {
+      throw new NotFoundError('Plan not found')
+    }
+
+    // Step 2: Verify user owns the plan
+    if (existingPlan.user_id !== userId) {
+      throw new ForbiddenError('You do not have permission to update this plan')
+    }
+
+    // Step 3: Update plan state
+    const { data: updatedPlan, error: updateError } = await supabase
+      .from('plans')
+      .update({ 
+        state: newState,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', planId)
+      .select('id, user_id, state, start_date, end_date, created_at, updated_at')
+      .single()
+
+    if (updateError) {
+      console.error('[updatePlanState] Plan update error:', updateError)
+      throw new ServerError('Failed to update plan state', updateError as any)
+    }
+
+    if (!updatedPlan) {
+      throw new ServerError('Failed to retrieve updated plan')
+    }
+
+    // Step 4: Return updated plan as PlanDTO
+    return {
+      id: updatedPlan.id,
+      user_id: updatedPlan.user_id,
+      state: updatedPlan.state as Enums<'plan_state'>,
+      start_date: updatedPlan.start_date,
+      end_date: updatedPlan.end_date,
+      created_at: updatedPlan.created_at,
+      updated_at: updatedPlan.updated_at
+    }
+  } catch (error) {
+    // Re-throw application errors
+    if (error instanceof NotFoundError || error instanceof ForbiddenError || error instanceof ServerError) {
+      throw error
+    }
+
+    // Wrap unexpected errors
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('[updatePlanState] Unexpected error:', errorMessage)
+    throw new ServerError('Failed to update plan state', error instanceof Error ? error : undefined)
   }
 }
