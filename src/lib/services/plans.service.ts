@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Enums } from '../../db/database.types'
-import type { CreatePlanCommand, PlanDTO } from '../../types'
+import type { CreatePlanCommand, PlanDTO, PlansListResponse, PaginationMeta, PlanDetailsResponse } from '../../types'
+import type { GetPlansQuery } from '../schemas/plan'
 import { ConflictError, ServerError, NotFoundError, ForbiddenError } from '../errors'
 import { randomUUID } from 'crypto'
 
@@ -201,6 +202,79 @@ async function checkExistingActivePlan(
 }
 
 /**
+ * Get paginated list of user's plans with optional filtering
+ * 
+ * Features:
+ * - Pagination with limit and offset
+ * - Optional filtering by plan state
+ * - Ordered by created_at DESC (newest first)
+ * - RLS automatically filters by user_id
+ * 
+ * @param supabase - Supabase client
+ * @param userId - User ID (for logging/debugging, RLS handles authorization)
+ * @param filters - Query filters (state, limit, offset)
+ * @returns Paginated list of plans with metadata
+ * @throws ServerError on database errors
+ */
+export async function getPlans(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  filters: GetPlansQuery
+): Promise<PlansListResponse> {
+  const { state, limit, offset } = filters
+
+  try {
+    // Build query with count
+    let query = supabase
+      .from('plans')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+
+    // Apply state filter if provided
+    if (state) {
+      query = query.eq('state', state)
+    }
+
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1)
+
+    // Execute query
+    const { data, error, count } = await query
+
+    if (error) {
+      console.error('[getPlans] Query error:', error)
+      throw new ServerError('Failed to fetch plans', error)
+    }
+
+    // Build pagination metadata
+    const total = count ?? 0
+    const has_more = (offset + limit) < total
+
+    const pagination: PaginationMeta = {
+      total,
+      limit,
+      offset,
+      has_more
+    }
+
+    return {
+      data: data ?? [],
+      pagination
+    }
+  } catch (error) {
+    // Re-throw application errors
+    if (error instanceof ServerError) {
+      throw error
+    }
+
+    // Wrap unexpected errors
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('[getPlans] Unexpected error:', errorMessage)
+    throw new ServerError('Failed to fetch plans', error instanceof Error ? error : undefined)
+  }
+}
+
+/**
  * Generate a new meal plan for user
  * 
  * Steps:
@@ -340,9 +414,12 @@ export async function generatePlan(
         usedRecipeIds.add(selectedRecipe.id)
 
         // v2 SEMANTICS: Calculate portion_multiplier (number of portions to eat)
-        // Formula: portion_multiplier = target_calories / calories_per_portion
+        // IMPORTANT: portion_multiplier must be an INTEGER (whole number of portions)
+        // This aligns with PRD requirements ("2 porcje", not "2.4 porcje")
+        // and enables "Ugotuj 1/3" fraction display logic
+        // Formula: portion_multiplier = ROUND(target_calories / calories_per_portion)
         const caloriesPerPortion = selectedRecipe.calories_kcal
-        const portion_multiplier = Math.round((slotTargets[slot] / caloriesPerPortion) * 10) / 10
+        const portion_multiplier = Math.round(slotTargets[slot] / caloriesPerPortion)
 
         // v2 VALIDATION: Ensure portion_multiplier doesn't exceed recipe portions
         // (Database trigger will also validate this, but we check here for early error reporting)
@@ -621,6 +698,209 @@ export async function getPlanDetailsWithMeals(
     const errorMessage = error instanceof Error ? error.message : String(error)
     console.error('[getPlanDetailsWithMeals] Unexpected error:', errorMessage)
     throw new ServerError('Failed to fetch plan details', error instanceof Error ? error : undefined)
+  }
+}
+
+/**
+ * Get plan by ID with nested days, meals, and recipes
+ * 
+ * Retrieves:
+ * - Plan metadata (id, user_id, state, dates)
+ * - All plan days ordered by date
+ * - Slot targets for each day (breakfast, lunch, dinner, snack)
+ * - Meals with full recipe details including available_slots
+ * 
+ * @param supabase - Supabase client
+ * @param planId - ID of the plan to fetch
+ * @param userId - User ID to filter plans by (temporary until RLS is enabled)
+ * @returns PlanDetailsResponse with nested structure or null if not found
+ * @throws ServerError on database errors
+ */
+export async function getPlanById(
+  supabase: SupabaseClient<Database>,
+  planId: number,
+  userId: string
+): Promise<PlanDetailsResponse | null> {
+  try {
+    // Step 1: Fetch plan record filtered by user_id
+    const { data: planData, error: planError } = await supabase
+      .from('plans')
+      .select('*')
+      .eq('id', planId)
+      .eq('user_id', userId)
+      .single()
+
+    if (planError) {
+      // PGRST116 = not found
+      if ((planError as any).code === 'PGRST116') {
+        return null
+      }
+      console.error('[getPlanById] Plan fetch error:', planError)
+      throw new ServerError('Failed to fetch plan', planError as any)
+    }
+
+    if (!planData) {
+      return null
+    }
+
+    // Step 2: Fetch plan days ordered by date
+    const { data: daysData, error: daysError } = await supabase
+      .from('plan_days')
+      .select('*')
+      .eq('plan_id', planId)
+      .order('date', { ascending: true })
+
+    if (daysError) {
+      console.error('[getPlanById] Days fetch error:', daysError)
+      throw new ServerError('Failed to fetch plan days', daysError as any)
+    }
+
+    const dayIds = (daysData || []).map(d => d.id)
+
+    // Step 3: Fetch slot targets for all days
+    let targetsData: any[] = []
+    if (dayIds.length > 0) {
+      const { data, error } = await supabase
+        .from('plan_day_slot_targets')
+        .select('*')
+        .in('plan_day_id', dayIds)
+
+      if (error) {
+        console.error('[getPlanById] Targets fetch error:', error)
+        throw new ServerError('Failed to fetch slot targets', error as any)
+      }
+
+      targetsData = data || []
+    }
+
+    // Step 4: Fetch meals with recipe details
+    let mealsData: any[] = []
+    if (dayIds.length > 0) {
+      const { data, error } = await supabase
+        .from('plan_meals')
+        .select(`
+          id,
+          slot,
+          status,
+          calories_planned,
+          portion_multiplier,
+          portions_to_cook,
+          multi_portion_group_id,
+          is_leftover,
+          plan_day_id,
+          recipe_id,
+          recipes (
+            id,
+            name,
+            image_url,
+            prep_minutes,
+            cook_minutes,
+            source_url
+          )
+        `)
+        .in('plan_day_id', dayIds)
+        .order('slot')
+
+      if (error) {
+        console.error('[getPlanById] Meals fetch error:', error)
+        throw new ServerError('Failed to fetch plan meals', error as any)
+      }
+
+      mealsData = data || []
+    }
+
+    // Step 5: Fetch available_slots for all recipes
+    const recipeSlotsMap = new Map<number, Enums<'meal_slot'>[]>()
+    if (mealsData.length > 0) {
+      const recipeIds = [...new Set(mealsData.map(m => m.recipe_id))]
+
+      const { data, error } = await supabase
+        .from('recipe_slots')
+        .select('recipe_id, slot')
+        .in('recipe_id', recipeIds)
+
+      if (error) {
+        console.error('[getPlanById] Recipe slots fetch error:', error)
+        throw new ServerError('Failed to fetch recipe slots', error as any)
+      }
+
+      // Build map: recipe_id -> slots[]
+      (data || []).forEach(rs => {
+        const slots = recipeSlotsMap.get(rs.recipe_id) || []
+        slots.push(rs.slot as Enums<'meal_slot'>)
+        recipeSlotsMap.set(rs.recipe_id, slots)
+      })
+    }
+
+    // Step 6: Transform to PlanDetailsResponse structure
+    const days = (daysData || []).map(day => {
+      // Map meals for this day
+      const dayMeals = mealsData
+        .filter(m => m.plan_day_id === day.id)
+        .map(m => {
+          const recipe = m.recipes as any
+          const timeMinutes = (recipe.prep_minutes || 0) + (recipe.cook_minutes || 0)
+
+          return {
+            id: m.id,
+            slot: m.slot as Enums<'meal_slot'>,
+            status: m.status as Enums<'meal_status'>,
+            calories_planned: m.calories_planned,
+            portion_multiplier: m.portion_multiplier,
+            portions_to_cook: m.portions_to_cook,
+            multi_portion_group_id: m.multi_portion_group_id,
+            is_leftover: m.is_leftover,
+            recipe: {
+              id: recipe.id,
+              name: recipe.name,
+              image_url: recipe.image_url,
+              time_minutes: timeMinutes > 0 ? timeMinutes : null,
+              source_url: recipe.source_url,
+              available_slots: recipeSlotsMap.get(recipe.id) || []
+            }
+          }
+        })
+
+      // Map slot targets for this day
+      const dayTargets = targetsData
+        .filter(t => t.plan_day_id === day.id)
+        .map(t => ({
+          slot: t.slot as Enums<'meal_slot'>,
+          calories_target: t.calories_target
+        }))
+
+      return {
+        id: day.id,
+        plan_id: day.plan_id,
+        date: day.date,
+        meals: dayMeals,
+        slot_targets: dayTargets
+      }
+    })
+
+    // Step 7: Return complete PlanDetailsResponse
+    const response: PlanDetailsResponse = {
+      id: planData.id,
+      user_id: planData.user_id,
+      state: planData.state as Enums<'plan_state'>,
+      start_date: planData.start_date,
+      end_date: planData.end_date,
+      created_at: planData.created_at,
+      updated_at: planData.updated_at,
+      days
+    }
+
+    return response
+  } catch (error) {
+    // Re-throw application errors
+    if (error instanceof ServerError) {
+      throw error
+    }
+
+    // Wrap unexpected errors
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('[getPlanById] Unexpected error:', errorMessage)
+    throw new ServerError('Failed to fetch plan', error instanceof Error ? error : undefined)
   }
 }
 

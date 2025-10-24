@@ -217,7 +217,9 @@ export async function validateSwapCandidate(
 
   const targetCalories = slotTarget.calories_target
   const caloriesPerPortion = recipe.calories_kcal
-  const portionMultiplier = Math.round((targetCalories / caloriesPerPortion) * 10) / 10
+  // IMPORTANT: portion_multiplier must be an INTEGER (whole number of portions)
+  // This aligns with PRD requirements and database constraints
+  const portionMultiplier = Math.round(targetCalories / caloriesPerPortion)
 
   // Rule 2: Check if portion multiplier exceeds recipe portions
   if (portionMultiplier > recipe.portions) {
@@ -286,7 +288,8 @@ export async function performSwapTransaction(
 
     const targetCalories = slotTarget.calories_target
     const caloriesPerPortion = newRecipe.calories_kcal
-    const portionMultiplier = Math.round((targetCalories / caloriesPerPortion) * 10) / 10
+    // IMPORTANT: portion_multiplier must be an INTEGER (whole number of portions)
+    const portionMultiplier = Math.round(targetCalories / caloriesPerPortion)
     const plannedCalories = Math.round(caloriesPerPortion * portionMultiplier)
 
     // Determine which meals to update

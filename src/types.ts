@@ -153,7 +153,8 @@ export type RecipeInMealResponse = Pick<
  * Combines plan_meals table data with nested recipe information
  *
  * v2 Schema Updates:
- * - portion_multiplier: Number of portions to eat (e.g., 2.4, 3.0) - not a fraction!
+ * - portion_multiplier: WHOLE NUMBER of portions to eat (e.g., 2, 3, 1) - MUST be integer!
+ *   This aligns with PRD requirement ("2 porcje", not "2.4 porcje") and enables fraction display logic ("Ugotuj 1/3")
  * - portions_to_cook: How many portions to prepare. Set for day 1 (cooking), NULL for day 2 (leftovers)
  * - is_leftover: Distinguishes day 1 (cooking, FALSE) from day 2 (leftovers, TRUE)
  * - multi_portion_group_id: Groups consecutive days for multi-portion meals

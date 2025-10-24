@@ -81,3 +81,20 @@ export const updatePlanCommandSchema = z.object({
 }).strict()
 
 export type UpdatePlanCommand = z.infer<typeof updatePlanCommandSchema>
+
+/**
+ * Validation schema for GET /api/plans query parameters
+ * Validates pagination and filtering parameters
+ * 
+ * Rules:
+ * - state: optional filter by plan state (null from URLSearchParams is treated as undefined)
+ * - limit: 1-50, default 10 (controls results per page)
+ * - offset: >=0, default 0 (controls pagination offset)
+ */
+export const getPlansQuerySchema = z.object({
+  state: z.enum(['active', 'archived', 'cancelled']).nullish().transform(val => val ?? undefined),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+  offset: z.coerce.number().int().min(0).default(0)
+})
+
+export type GetPlansQuery = z.infer<typeof getPlansQuerySchema>

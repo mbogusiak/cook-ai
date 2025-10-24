@@ -1,0 +1,12 @@
+---
+import Layout from "../layouts/Layout.astro";
+import OnboardingPage from "../components/onboarding/OnboardingPage.tsx";
+---
+
+<Layout title="Onboarding">
+  <div class="min-h-screen flex items-center justify-center py-8">
+    <OnboardingPage client:load />
+  </div>
+</Layout>
+
+

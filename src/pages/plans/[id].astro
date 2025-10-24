@@ -1,0 +1,27 @@
+---
+/**
+ * Plan Overview Page
+ * Dynamic route for viewing plan details
+ * Path: /plans/{id}
+ * 
+ * Note: Currently accessible without authentication
+ * Authentication will be added in a separate step
+ */
+
+import Layout from '@/layouts/Layout.astro'
+import { PlanOverviewContent } from '@/components/planOverview/PlanOverviewContent'
+
+// Get plan ID from URL params
+const { id } = Astro.params
+
+// Validate plan ID
+if (!id || isNaN(Number(id))) {
+  return Astro.redirect('/dashboard')
+}
+
+const planId = Number(id)
+---
+
+<Layout title={`Plan #${planId}`}>
+  <PlanOverviewContent client:load planId={planId} />
+</Layout>

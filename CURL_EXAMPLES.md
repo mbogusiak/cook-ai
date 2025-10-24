@@ -792,3 +792,318 @@ curl -X POST http://localhost:3000/api/plans/generate \
 | Wrong date format | Use ISO 8601 (YYYY-MM-DD) |
 | Calories as string | Must be number, not quoted |
 
+---
+
+# Test Commands for GET /api/plans
+
+## Endpoint: GET /api/plans
+
+**Description**: Retrieve paginated list of plans for a user with optional filtering.
+
+**Base URL**: `http://localhost:4321/api/plans`
+
+**Note**: Currently uses hardcoded user_id (`321a3490-fa8f-43ee-82c5-9efdfe027603`) for development. Authentication will be added later.
+
+---
+
+## ✅ Success Cases
+
+### 1. Basic request (default pagination)
+Get all plans with default pagination (limit=10, offset=0):
+```bash
+curl "http://localhost:4321/api/plans" | jq
+```
+
+**Expected Response (200 OK)**:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "user_id": "321a3490-fa8f-43ee-82c5-9efdfe027603",
+      "state": "active",
+      "start_date": "2024-01-15",
+      "end_date": "2024-01-21",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 5,
+    "limit": 10,
+    "offset": 0,
+    "has_more": false
+  }
+}
+```
+
+### 2. Filter by state=active
+Get only active plans:
+```bash
+curl "http://localhost:4321/api/plans?state=active" | jq
+```
+
+### 3. Filter by state=archived
+Get only archived plans:
+```bash
+curl "http://localhost:4321/api/plans?state=archived" | jq
+```
+
+### 4. Filter by state=cancelled
+Get only cancelled plans:
+```bash
+curl "http://localhost:4321/api/plans?state=cancelled" | jq
+```
+
+### 5. Custom pagination - limit
+Get first 5 plans:
+```bash
+curl "http://localhost:4321/api/plans?limit=5" | jq
+```
+
+Get first 20 plans:
+```bash
+curl "http://localhost:4321/api/plans?limit=20" | jq
+```
+
+Maximum limit (50):
+```bash
+curl "http://localhost:4321/api/plans?limit=50" | jq
+```
+
+### 6. Pagination with offset
+Second page (skip first 10):
+```bash
+curl "http://localhost:4321/api/plans?limit=10&offset=10" | jq
+```
+
+Third page (skip first 20):
+```bash
+curl "http://localhost:4321/api/plans?limit=10&offset=20" | jq
+```
+
+### 7. Combined filters
+Active plans with custom pagination:
+```bash
+curl "http://localhost:4321/api/plans?state=active&limit=5&offset=0" | jq
+```
+
+Archived plans, 3 per page:
+```bash
+curl "http://localhost:4321/api/plans?state=archived&limit=3" | jq
+```
+
+### 8. Check pagination metadata
+View only pagination info:
+```bash
+curl "http://localhost:4321/api/plans?limit=5" | jq '.pagination'
+```
+
+Check if more results exist:
+```bash
+curl "http://localhost:4321/api/plans?limit=5" | jq '.pagination.has_more'
+```
+
+Get total count:
+```bash
+curl "http://localhost:4321/api/plans" | jq '.pagination.total'
+```
+
+---
+
+## ❌ Error Cases (Expected 400 Bad Request)
+
+### 1. Invalid state value
+```bash
+curl "http://localhost:4321/api/plans?state=invalid" | jq
+```
+
+**Expected Response**:
+```json
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "code": "invalid_enum_value",
+      "path": ["state"],
+      "message": "Invalid enum value. Expected 'active' | 'archived' | 'cancelled'"
+    }
+  ]
+}
+```
+
+### 2. Limit too high (max is 50)
+```bash
+curl "http://localhost:4321/api/plans?limit=100" | jq
+```
+
+**Expected Response**:
+```json
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "code": "too_big",
+      "path": ["limit"],
+      "message": "Number must be less than or equal to 50"
+    }
+  ]
+}
+```
+
+### 3. Limit too low (min is 1)
+```bash
+curl "http://localhost:4321/api/plans?limit=0" | jq
+```
+
+**Expected Response**:
+```json
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "code": "too_small",
+      "path": ["limit"],
+      "message": "Number must be greater than or equal to 1"
+    }
+  ]
+}
+```
+
+### 4. Negative offset
+```bash
+curl "http://localhost:4321/api/plans?offset=-5" | jq
+```
+
+**Expected Response**:
+```json
+{
+  "error": "Validation error",
+  "details": [
+    {
+      "code": "too_small",
+      "path": ["offset"],
+      "message": "Number must be greater than or equal to 0"
+    }
+  ]
+}
+```
+
+### 5. Invalid data types
+Non-numeric limit:
+```bash
+curl "http://localhost:4321/api/plans?limit=abc" | jq
+```
+
+Non-numeric offset:
+```bash
+curl "http://localhost:4321/api/plans?offset=xyz" | jq
+```
+
+---
+
+## 🔍 Advanced Testing
+
+### 1. Check response headers
+```bash
+curl -I "http://localhost:4321/api/plans"
+```
+
+### 2. Show response with timing
+```bash
+curl -w "\n\nTime: %{time_total}s\n" "http://localhost:4321/api/plans?limit=20" | jq
+```
+
+### 3. Verbose output
+```bash
+curl -v "http://localhost:4321/api/plans?state=active" | jq
+```
+
+### 4. Save response to file
+```bash
+curl "http://localhost:4321/api/plans" -o plans-response.json
+cat plans-response.json | jq
+```
+
+### 5. Extract only plan IDs
+```bash
+curl "http://localhost:4321/api/plans" | jq '.data[].id'
+```
+
+### 6. Extract only plan states
+```bash
+curl "http://localhost:4321/api/plans" | jq '.data[].state'
+```
+
+### 7. Count active plans
+```bash
+curl "http://localhost:4321/api/plans?state=active" | jq '.pagination.total'
+```
+
+---
+
+## 📊 Performance Testing
+
+### 1. Test multiple requests
+```bash
+for i in {1..10}; do
+  echo "Request $i:"
+  curl -w "Time: %{time_total}s\n" "http://localhost:4321/api/plans" -o /dev/null -s
+done
+```
+
+### 2. Test different page sizes
+```bash
+for limit in 5 10 20 50; do
+  echo "Testing limit=$limit:"
+  curl -w "Time: %{time_total}s\n" "http://localhost:4321/api/plans?limit=$limit" -o /dev/null -s
+done
+```
+
+---
+
+## 🎯 Automated Test Script
+
+Run comprehensive tests:
+```bash
+./scripts/test-plans-list.sh
+```
+
+This script tests:
+- ✅ Default pagination
+- ✅ State filtering (active, archived, cancelled)
+- ✅ Custom pagination (limit, offset)
+- ✅ Combined filters
+- ❌ Invalid parameters (400 errors)
+- 📊 Pagination metadata (has_more, total)
+
+---
+
+## 📝 Testing Checklist
+
+- [ ] Default pagination works (limit=10, offset=0)
+- [ ] Filter by state=active returns only active plans
+- [ ] Filter by state=archived returns only archived plans
+- [ ] Filter by state=cancelled returns only cancelled plans
+- [ ] Custom limit (5, 20, 50) works correctly
+- [ ] Pagination with offset works
+- [ ] Invalid state returns 400 with details
+- [ ] Limit > 50 returns 400
+- [ ] Limit < 1 returns 400
+- [ ] Negative offset returns 400
+- [ ] has_more flag is correct
+- [ ] Total count is accurate
+- [ ] Plans are ordered by created_at DESC (newest first)
+
+---
+
+## 📖 Notes
+
+- All requests use hardcoded user_id: `321a3490-fa8f-43ee-82c5-9efdfe027603`
+- Authentication will be added in future iteration
+- Plans are automatically filtered by user_id via RLS (Row Level Security)
+- Plans are ordered by `created_at` DESC (newest first)
+- Empty results (`data: []`) is valid - user may have no plans
+- `has_more` is calculated as: `(offset + limit) < total`
+- Validation uses Zod with automatic type coercion for query parameters
+
