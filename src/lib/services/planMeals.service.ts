@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Enums } from '../../db/database.types'
 import type { UpdatedMealInSwap, RecipeDTO } from '../../types'
-import { ServerError } from '../errors'
+import { ServerError, NotFoundError, ForbiddenError, BadRequestError } from '../errors'
 
 /**
  * Tolerance percentage for calorie validation (±20%)
@@ -465,11 +465,14 @@ export async function getAlternativesForMeal(
       limit
     })
 
-    // Step 3: Find recipe IDs that match the slot
+    // Step 3: Find recipe IDs that match the slot (limited to avoid URI too long)
+    // Fetch a large batch first to ensure we have enough candidates
+    const batchSize = 1000
     const { data: slotMatches, error: slotError } = await supabase
       .from('recipe_slots')
       .select('recipe_id')
       .eq('slot', planMeal.slot)
+      .limit(batchSize)
 
     if (slotError) {
       console.error('[getAlternativesForMeal] Error fetching recipe slots:', slotError)
@@ -484,19 +487,35 @@ export async function getAlternativesForMeal(
     }
 
     // Step 4: Query recipes with calorie filter
-    const { data: recipes, error: recipesError } = await supabase
-      .from('recipes')
-      .select('id, slug, name, calories_kcal, portions, prep_minutes, cook_minutes, image_url, source_url')
-      .in('id', eligibleRecipeIds)
-      .neq('id', planMeal.recipe_id) // Exclude current recipe
-      .gte('calories_kcal', minCalories)
-      .lte('calories_kcal', maxCalories)
-      .eq('is_active', true)
-      .limit(limit)
+    // Split into batches to avoid "URI too long" errors with .in() for large ID lists
+    const idBatchSize = 100
+    let recipes: any[] = []
 
-    if (recipesError) {
-      console.error('[getAlternativesForMeal] Error fetching recipes:', recipesError)
-      throw new ServerError('Failed to fetch alternative recipes', recipesError as any)
+    for (let i = 0; i < eligibleRecipeIds.length; i += idBatchSize) {
+      const batch = eligibleRecipeIds.slice(i, i + idBatchSize)
+
+      const { data: batchRecipes, error: recipesError } = await supabase
+        .from('recipes')
+        .select('id, slug, name, calories_kcal, portions, prep_minutes, cook_minutes, image_url, source_url')
+        .in('id', batch)
+        .neq('id', planMeal.recipe_id) // Exclude current recipe
+        .gte('calories_kcal', minCalories)
+        .lte('calories_kcal', maxCalories)
+        .eq('is_active', true)
+
+      if (recipesError) {
+        console.error('[getAlternativesForMeal] Error fetching recipes batch:', recipesError)
+        throw new ServerError('Failed to fetch alternative recipes', recipesError as any)
+      }
+
+      if (batchRecipes) {
+        recipes = recipes.concat(batchRecipes)
+        // Stop once we have enough results
+        if (recipes.length >= limit) {
+          recipes = recipes.slice(0, limit)
+          break
+        }
+      }
     }
 
     if (!recipes || recipes.length === 0) {
@@ -561,5 +580,92 @@ export async function getAlternativesForMeal(
       error instanceof Error ? error : undefined
     )
   }
+}
+
+/**
+ * Update meal status
+ *
+ * @param supabase - Supabase client
+ * @param mealId - ID of the meal to update
+ * @param userId - ID of the user (for authorization check)
+ * @param newStatus - New status value
+ * @returns Updated meal
+ * @throws NotFoundError if meal doesn't exist
+ * @throws ForbiddenError if user doesn't own the meal
+ * @throws ServerError on database errors
+ */
+export async function updateMealStatus(
+  supabase: SupabaseClient<Database>,
+  mealId: number,
+  userId: string,
+  newStatus: Enums<'meal_status'>
+): Promise<{ id: number; status: Enums<'meal_status'> }> {
+  // 1. Verify ownership
+  const { data: existingMeal, error: fetchError } = await supabase
+    .from('plan_meals')
+    .select('id, user_id')
+    .eq('id', mealId)
+    .single();
+
+  if (fetchError) {
+    if ((fetchError as any).code === 'PGRST116') {
+      throw new NotFoundError('Meal not found');
+    }
+    throw new ServerError('Failed to fetch meal', fetchError);
+  }
+
+  if (existingMeal.user_id !== userId) {
+    throw new ForbiddenError('You do not have permission to update this meal');
+  }
+
+  // 2. Update status
+  const { data: updatedMeal, error: updateError } = await supabase
+    .from('plan_meals')
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq('id', mealId)
+    .select('id, status')
+    .single();
+
+  if (updateError) {
+    throw new ServerError('Failed to update meal status', updateError);
+  }
+
+  return updatedMeal;
+}
+
+export async function swapMeal(
+  supabase: SupabaseClient<Database>,
+  mealId: number,
+  userId: string,
+  alternativeRecipeId: number
+): Promise<UpdatedMealInSwap[]> {
+  // 1. Get the original meal and verify ownership
+  const planMeal = await getPlanMealById(mealId, supabase);
+  if (!planMeal) {
+    throw new NotFoundError('Plan meal not found');
+  }
+  if (planMeal.user_id !== userId) {
+    throw new ForbiddenError('You do not have permission to swap this meal');
+  }
+  if (planMeal.status !== 'planned') {
+      throw new BadRequestError('Only planned meals can be swapped.');
+  }
+
+  // 2. Get the new recipe
+  const newRecipe = await getRecipeById(alternativeRecipeId, supabase);
+  if (!newRecipe) {
+    throw new NotFoundError('Alternative recipe not found');
+  }
+
+  // 3. Validate the swap
+  const validation = await validateSwapCandidate(planMeal, newRecipe, supabase);
+  if (!validation.isValid) {
+    throw new BadRequestError(validation.error || 'Swap validation failed');
+  }
+
+  // 4. Perform the swap
+  const updatedMeals = await performSwapTransaction(mealId, newRecipe, planMeal, supabase);
+
+  return updatedMeals;
 }
 

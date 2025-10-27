@@ -1,8 +1,34 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
----
+// TODO: Replace with proper authentication
+// For now, using hardcoded user_id for development
+const TEMP_USER_ID = '1e486c09-70e2-4acc-913d-7b500bbde2ca';
 
-<Layout>
-  <Welcome />
-</Layout>
+// Check if user has active plan
+const supabase = Astro.locals.supabase;
+
+try {
+  const { data: activePlan, error } = await supabase
+    .from('plans')
+    .select('id')
+    .eq('user_id', TEMP_USER_ID)
+    .eq('state', 'active')
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 = no rows found, which is expected
+    console.error('Error checking active plan:', error);
+  }
+
+  // If user has active plan, redirect to dashboard
+  // Otherwise, redirect to onboarding
+  if (activePlan && activePlan.id) {
+    return Astro.redirect('/dashboard');
+  } else {
+    return Astro.redirect('/onboarding');
+  }
+} catch (err) {
+  console.error('Error in index redirect:', err);
+  // Default to dashboard on error
+  return Astro.redirect('/dashboard');
+}
+---

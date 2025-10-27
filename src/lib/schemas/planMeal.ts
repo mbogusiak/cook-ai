@@ -41,15 +41,17 @@ export type PlanMealIdInput = z.infer<typeof planMealIdSchema>
 /**
  * Validation schema for alternatives query parameters
  * Validates query parameters for GET /api/plan-meals/{id}/alternatives endpoint
- * 
+ *
  * Rules:
  * - limit: Optional number of alternatives to return (default 3, max 10)
  */
 export const alternativesQuerySchema = z.object({
   limit: z
     .string()
+    .nullable()
     .optional()
     .default('3')
+    .transform((val) => val || '3')
     .transform((val) => Number(val))
     .pipe(
       z

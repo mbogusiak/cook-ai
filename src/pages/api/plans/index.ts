@@ -54,7 +54,7 @@ export const GET: APIRoute = async (context) => {
 
     // TODO: Replace with proper authentication
     // For now, using hardcoded user_id for development
-    const userId = '321a3490-fa8f-43ee-82c5-9efdfe027603'
+    const userId = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
 
     // 4. Call service to get plans
     const result = await getPlans(supabase, userId, filters)

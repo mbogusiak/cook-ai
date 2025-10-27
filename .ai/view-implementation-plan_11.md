@@ -1307,3 +1307,4 @@ Po wdrożeniu tego endpointa, użytkownicy będą mogli:
 **Status**: Gotowy do implementacji  
 **Priorytet**: Wysoki (blocking dla dashboard UI)
 
+

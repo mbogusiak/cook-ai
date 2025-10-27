@@ -15,6 +15,17 @@ export class ValidationError extends Error {
 }
 
 /**
+ * BadRequestError (400 Bad Request)
+ * Thrown for general bad requests that are not validation errors
+ */
+export class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BadRequestError';
+  }
+}
+
+/**
  * AuthenticationError (401 Unauthorized)
  * Thrown when user is not authenticated or session is invalid
  */
@@ -73,9 +84,10 @@ export class ServerError extends Error {
 /**
  * Check if error is a custom application error
  */
-export function isAppError(error: unknown): error is ValidationError | AuthenticationError | ForbiddenError | ConflictError | NotFoundError | ServerError {
+export function isAppError(error: unknown): error is ValidationError | BadRequestError | AuthenticationError | ForbiddenError | ConflictError | NotFoundError | ServerError {
   return (
     error instanceof ValidationError ||
+    error instanceof BadRequestError ||
     error instanceof AuthenticationError ||
     error instanceof ForbiddenError ||
     error instanceof ConflictError ||
@@ -89,6 +101,7 @@ export function isAppError(error: unknown): error is ValidationError | Authentic
  */
 export function getErrorStatusCode(error: unknown): number {
   if (error instanceof ValidationError) return 400
+  if (error instanceof BadRequestError) return 400
   if (error instanceof AuthenticationError) return 401
   if (error instanceof ForbiddenError) return 403
   if (error instanceof ConflictError) return 409

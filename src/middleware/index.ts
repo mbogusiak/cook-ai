@@ -1,8 +1,8 @@
 import { defineMiddleware } from 'astro:middleware';
 
-import { supabaseClient } from '../db/supabase.client.ts';
+import { supabaseServer } from '../db/supabase.server';
 
 export const onRequest = defineMiddleware((context, next) => {
-  context.locals.supabase = supabaseClient;
+  context.locals.supabase = supabaseServer;
   return next();
 });

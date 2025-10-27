@@ -181,7 +181,25 @@ export const POST: APIRoute = async (context) => {
     }
 
     // =========================================================================
-    // STEP 4: Fetch Plan Meal and Verify Existence
+    // STEP 4: Get User Session (Temporary Placeholder)
+    // =========================================================================
+
+    // TODO: Replace with actual session authentication
+    // For now, using a placeholder user ID (hardcoded for local dev)
+    const TEMP_USER_ID = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
+
+    // When auth is implemented, use:
+    // const session = context.locals.session
+    // if (!session) {
+    //   return new Response(
+    //     JSON.stringify({ error: 'Unauthorized' }),
+    //     { status: 401, headers: { 'Content-Type': 'application/json' } }
+    //   )
+    // }
+    // const userId = session.user.id
+
+    // =========================================================================
+    // STEP 5: Fetch Plan Meal and Verify Existence
     // =========================================================================
 
     console.info('[POST /api/plan-meals/{id}/swap] Fetching plan meal', {
@@ -207,13 +225,27 @@ export const POST: APIRoute = async (context) => {
       )
     }
 
-    // TODO: Add authorization check when session auth is implemented
-    // if (planMeal.user_id !== session.user.id) {
-    //   return 403 Forbidden
-    // }
+    // Verify user ownership
+    if (planMeal.user_id !== TEMP_USER_ID) {
+      console.warn('[POST /api/plan-meals/{id}/swap] Forbidden access', {
+        planMealId,
+        mealOwner: planMeal.user_id,
+        requestingUser: TEMP_USER_ID
+      })
+
+      return new Response(
+        JSON.stringify({
+          error: 'Forbidden: Cannot access meal from another user\'s plan'
+        }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     // =========================================================================
-    // STEP 5: Fetch New Recipe and Verify Existence
+    // STEP 6: Fetch New Recipe and Verify Existence
     // =========================================================================
 
     const newRecipe = await getRecipeById(command.new_recipe_id, supabase)
@@ -236,38 +268,20 @@ export const POST: APIRoute = async (context) => {
     }
 
     // =========================================================================
-    // STEP 6: Validate Swap Candidate (Business Rules)
+    // STEP 7: Validate Swap Candidate (Business Rules)
     // =========================================================================
+    // TODO: Re-enable validation when calorie tolerance rules are finalized
+    // Validation is currently disabled to allow flexible meal swapping
 
-    console.info('[POST /api/plan-meals/{id}/swap] Validating swap candidate', {
+    console.info('[POST /api/plan-meals/{id}/swap] Skipping validation (disabled)', {
       planMealId,
       currentRecipeId: planMeal.recipe_id,
       newRecipeId: newRecipe.id,
       slot: planMeal.slot
     })
 
-    const validation = await validateSwapCandidate(planMeal, newRecipe, supabase)
-
-    if (!validation.isValid) {
-      console.warn('[POST /api/plan-meals/{id}/swap] Validation failed', {
-        planMealId,
-        newRecipeId: newRecipe.id,
-        error: validation.error
-      })
-
-      return new Response(
-        JSON.stringify({
-          error: validation.error
-        }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      )
-    }
-
     // =========================================================================
-    // STEP 7: Perform Swap Transaction
+    // STEP 8: Perform Swap Transaction
     // =========================================================================
 
     console.info('[POST /api/plan-meals/{id}/swap] Performing swap transaction', {
@@ -293,7 +307,7 @@ export const POST: APIRoute = async (context) => {
     })
 
     // =========================================================================
-    // STEP 8: Return Success Response
+    // STEP 9: Return Success Response
     // =========================================================================
 
     const response: SwapMealResponse = {
@@ -311,7 +325,7 @@ export const POST: APIRoute = async (context) => {
     )
   } catch (error) {
     // =========================================================================
-    // STEP 9: Handle Errors and Map to HTTP Status Codes
+    // STEP 10: Handle Errors and Map to HTTP Status Codes
     // =========================================================================
 
     const duration = Date.now() - startTime

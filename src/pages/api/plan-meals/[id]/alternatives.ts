@@ -146,8 +146,8 @@ export const GET: APIRoute = async (context) => {
     // =========================================================================
 
     // TODO: Replace with actual session authentication
-    // For now, using a placeholder user ID
-    const TEMP_USER_ID = 'a2c3e22c-8af3-4bdb-ba73-c1e66cd482f0'
+    // For now, using a placeholder user ID (hardcoded for local dev)
+    const TEMP_USER_ID = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
 
     // When auth is implemented, use:
     // const session = context.locals.session

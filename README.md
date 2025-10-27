@@ -17,7 +17,7 @@
 
 ## 1. Project name
 
-**Cookido AI — Meal Planner**
+**Mealflow — Meal Planner**
 
 ## 2. Project description
 
