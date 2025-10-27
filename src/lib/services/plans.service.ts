@@ -220,7 +220,7 @@ export async function getPlans(
   supabase: SupabaseClient<Database>,
   userId: string,
   filters: GetPlansQuery
-): Promise<PlansListResponse> {
+): Promise<PlansListResponse & { has_active_plan: boolean }> {
   const { state, limit, offset } = filters
 
   try {
@@ -246,6 +246,19 @@ export async function getPlans(
       throw new ServerError('Failed to fetch plans', error)
     }
 
+    // Check if user has any active plan (query all plans to check, ignoring pagination)
+    const { data: allPlans, error: allPlansError } = await supabase
+      .from('plans')
+      .select('state')
+      .eq('state', 'active')
+
+    if (allPlansError) {
+      console.error('[getPlans] Error checking active plans:', allPlansError)
+      throw new ServerError('Failed to check active plans', allPlansError)
+    }
+
+    const has_active_plan = (allPlans ?? []).length > 0
+
     // Build pagination metadata
     const total = count ?? 0
     const has_more = (offset + limit) < total
@@ -259,7 +272,8 @@ export async function getPlans(
 
     return {
       data: data ?? [],
-      pagination
+      pagination,
+      has_active_plan
     }
   } catch (error) {
     // Re-throw application errors
@@ -394,9 +408,23 @@ export async function generatePlan(
     // 4. Create plan_meals by selecting recipes (v2 UPDATED with portion_multiplier & portions_to_cook)
     const mealsToInsert: any[] = []
     const usedRecipeIds = new Set<number>()
+    
+    // Track which day/slot combinations are already filled (by multi-portion leftovers)
+    // Key format: "dayIndex_slot" (e.g., "0_lunch", "1_dinner")
+    const filledSlots = new Set<string>()
 
-    for (const planDay of planDaysData) {
+    for (let dayIndex = 0; dayIndex < planDaysData.length; dayIndex++) {
+      const planDay = planDaysData[dayIndex]
+      
       for (const slot of slots) {
+        const slotKey = `${dayIndex}_${slot}`
+        
+        // Skip if this slot is already filled by a multi-portion leftover
+        if (filledSlots.has(slotKey)) {
+          console.log(`[generatePlan] Skipping ${slotKey} - already filled by multi-portion leftover`)
+          continue
+        }
+        
         // Select recipe matching slot and calorie target
         const selectedRecipe = await selectRecipeWithFallback(
           supabase,
@@ -410,8 +438,6 @@ export async function generatePlan(
             `No recipes available for slot "${slot}" with ~${slotTargets[slot]} calories (excluding already used recipes)`
           )
         }
-
-        usedRecipeIds.add(selectedRecipe.id)
 
         // v2 SEMANTICS: Calculate portion_multiplier (number of portions to eat)
         // IMPORTANT: portion_multiplier must be an INTEGER (whole number of portions)
@@ -435,24 +461,89 @@ export async function generatePlan(
         // Formula: calories_planned = calories_per_portion * portion_multiplier
         const calories_planned = Math.round(caloriesPerPortion * portion_multiplier)
 
-        console.log(
-          `[generatePlan] Meal selected: ${selectedRecipe.name} (${slot}) ` +
-          `portion_multiplier=${portion_multiplier}, calories=${calories_planned}, portions_to_cook=${selectedRecipe.portions}`
-        )
+        // Multi-portion candidate criteria (per PRD):
+        // - Slot must be lunch or dinner (breakfast/snack are single-day only)
+        // - Recipe must have at least 2 portions
+        // - Next day must be available
+        // - Next day's same slot must not be filled yet
+        const isMultiPortionCandidate = 
+          (slot === 'lunch' || slot === 'dinner') &&
+          selectedRecipe.portions >= 2 &&
+          dayIndex < planDaysData.length - 1 &&
+          !filledSlots.has(`${dayIndex + 1}_${slot}`)
 
-        mealsToInsert.push({
-          plan_id: planId,
-          plan_day_id: planDay.id,
-          recipe_id: selectedRecipe.id,
-          slot,
-          status: 'planned',
-          calories_planned: calories_planned,  // v2: Calculated from portion_multiplier
-          portion_multiplier: portion_multiplier,  // v2: Number of portions to eat
-          portions_to_cook: selectedRecipe.portions,  // v2: Gotuj całą receptę
-          multi_portion_group_id: null,  // TODO: Implement multi-portion logic in future
-          is_leftover: false,  // v2: Day 1 = cooking, not leftovers
-          user_id: userId
-        })
+        if (isMultiPortionCandidate) {
+          // === MULTI-PORTION PATH ===
+          const multiPortionGroupId = randomUUID()
+          const nextDay = planDaysData[dayIndex + 1]
+          
+          console.log(
+            `[generatePlan] Multi-portion meal: ${selectedRecipe.name} (${slot}) ` +
+            `portion_multiplier=${portion_multiplier}, calories=${calories_planned}, ` +
+            `portions_to_cook=${selectedRecipe.portions}, days=${dayIndex}-${dayIndex + 1}`
+          )
+
+          // Day 1: Cooking day
+          mealsToInsert.push({
+            plan_id: planId,
+            plan_day_id: planDay.id,
+            recipe_id: selectedRecipe.id,
+            slot,
+            status: 'planned',
+            calories_planned: calories_planned,
+            portion_multiplier: portion_multiplier,
+            portions_to_cook: selectedRecipe.portions,  // Cook the full recipe
+            multi_portion_group_id: multiPortionGroupId,
+            is_leftover: false,  // Day 1 = cooking
+            user_id: userId
+          })
+
+          // Day 2: Leftovers day (SAME portion_multiplier!)
+          mealsToInsert.push({
+            plan_id: planId,
+            plan_day_id: nextDay.id,
+            recipe_id: selectedRecipe.id,
+            slot,
+            status: 'planned',
+            calories_planned: calories_planned,  // IDENTICAL to day 1
+            portion_multiplier: portion_multiplier,  // IDENTICAL to day 1
+            portions_to_cook: null,  // Don't cook, use leftovers
+            multi_portion_group_id: multiPortionGroupId,
+            is_leftover: true,  // Day 2 = leftovers
+            user_id: userId
+          })
+
+          // Mark next day's slot as filled
+          filledSlots.add(`${dayIndex + 1}_${slot}`)
+          
+          // Add recipe to used set (count once for the multi-portion pair)
+          usedRecipeIds.add(selectedRecipe.id)
+          
+        } else {
+          // === SINGLE-PORTION PATH ===
+          console.log(
+            `[generatePlan] Single-portion meal: ${selectedRecipe.name} (${slot}) ` +
+            `portion_multiplier=${portion_multiplier}, calories=${calories_planned}, ` +
+            `portions_to_cook=${selectedRecipe.portions}`
+          )
+
+          mealsToInsert.push({
+            plan_id: planId,
+            plan_day_id: planDay.id,
+            recipe_id: selectedRecipe.id,
+            slot,
+            status: 'planned',
+            calories_planned: calories_planned,
+            portion_multiplier: portion_multiplier,
+            portions_to_cook: selectedRecipe.portions,  // Cook the full recipe
+            multi_portion_group_id: null,
+            is_leftover: false,
+            user_id: userId
+          })
+          
+          // Add recipe to used set
+          usedRecipeIds.add(selectedRecipe.id)
+        }
       }
     }
 
