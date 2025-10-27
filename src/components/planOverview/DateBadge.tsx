@@ -22,10 +22,11 @@ export function DateBadge({ date, dayOfWeek, isCompleted, onClick }: DateBadgePr
         "flex flex-col items-center p-3 rounded-lg border-2",
         "transition-all duration-200 ease-in-out",
         "min-w-[70px] sm:min-w-[80px]",
+        "border-border bg-card",
         "hover:bg-accent hover:border-primary hover:shadow-md hover:scale-105",
         "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
         "snap-start",
-        isCompleted && "border-green-500 bg-green-50 hover:bg-green-100"
+        isCompleted && "border-success bg-success/10 hover:bg-success/20"
       )}
     >
       <span className="text-xs text-muted-foreground capitalize">

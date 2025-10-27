@@ -8,7 +8,7 @@ import { PlanHeader } from './PlanHeader'
 import { PlanCalendarStrip } from './PlanCalendarStrip'
 import { DaysList } from './DaysList'
 import { LoadingState } from './LoadingState'
-import { ErrorState } from './ErrorState'
+import { ErrorState } from './ErrorState.tsx'
 import { ConfirmDialog } from './ConfirmDialog'
 import { usePlanOverview } from './usePlanOverview'
 import { usePlanActions } from './usePlanActions'
@@ -29,12 +29,18 @@ export function PlanOverviewContent({ planId }: PlanOverviewContentProps) {
   // Plan actions
   const { archivePlan, cancelPlan, isArchiving, isCancelling } = usePlanActions(
     planId,
-    () => {
+    (action) => {
       // On success callback
-      refetch()
-      setShowConfirmDialog(false)
-      setConfirmAction(null)
-      setIsConfirming(false)
+      if (action === 'cancel') {
+        // Redirect to dashboard on plan cancellation
+        window.location.href = '/dashboard'
+      } else {
+        // On archive, just refetch and close dialog
+        refetch()
+        setShowConfirmDialog(false)
+        setConfirmAction(null)
+        setIsConfirming(false)
+      }
     }
   )
   

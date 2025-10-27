@@ -19,7 +19,7 @@ interface DayCardProps {
  */
 function getCompletionBadge(status: CompletionStatus) {
   const badges = {
-    'all-completed': { variant: 'default' as const, text: 'Ukończony', className: 'bg-green-500' },
+    'all-completed': { variant: 'default' as const, text: 'Ukończony', className: 'bg-success' },
     'partial': { variant: 'secondary' as const, text: 'W trakcie', className: '' },
     'none': { variant: 'outline' as const, text: 'Zaplanowany', className: '' }
   }

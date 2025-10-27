@@ -27,8 +27,8 @@ export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting 
       {/* Calories Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
-          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-            <Flame className="w-5 h-5 text-orange-500" />
+          <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
+            <Flame className="w-5 h-5 text-warning" />
           </div>
         </div>
         <div className="flex-grow">
@@ -64,8 +64,8 @@ export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting 
       {/* Plan Length Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
-          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-green-600" />
+          <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-success" />
           </div>
         </div>
         <div className="flex-grow">

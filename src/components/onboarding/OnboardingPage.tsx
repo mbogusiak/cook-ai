@@ -28,9 +28,9 @@ export default function OnboardingPage(): React.ReactElement {
   async function handleGenerate(): Promise<void> {
     const ok = validate({ validateStartDate: true })
     if (!ok) return
-    const success = await submit()
-    if (success) {
-      window.location.assign("/")
+    const planId = await submit()
+    if (planId) {
+      window.location.assign(`/plans/${planId}`)
     }
   }
 
@@ -40,8 +40,8 @@ export default function OnboardingPage(): React.ReactElement {
     <div className="w-full max-w-2xl mx-auto px-4">
       {/* Top Icon */}
       <div className="flex justify-center mb-8">
-        <div className="w-16 h-16 rounded-full bg-orange-500 flex items-center justify-center">
-          <ChefHat className="w-8 h-8 text-white" />
+        <div className="w-16 h-16 rounded-full bg-warning flex items-center justify-center">
+          <ChefHat className="w-8 h-8 text-warning-foreground" />
         </div>
       </div>
 
@@ -52,9 +52,9 @@ export default function OnboardingPage(): React.ReactElement {
       <p className="text-center text-muted-foreground mb-6">Krok {step} z 2</p>
 
       {/* Progress Bar */}
-      <div className="w-full h-1 bg-gray-200 rounded-full mb-8 overflow-hidden">
+      <div className="w-full h-1 bg-muted rounded-full mb-8 overflow-hidden">
         <div
-          className="h-full bg-orange-500 transition-all duration-300"
+          className="h-full bg-warning transition-all duration-300"
           style={{ width: `${progressPercent}%` }}
         />
       </div>

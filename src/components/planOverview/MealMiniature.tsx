@@ -58,10 +58,17 @@ export function MealMiniature({ meal }: MealMiniatureProps) {
         </Badge>
       </div>
       
-      {/* Completed icon */}
+      {/* Calories badge - always in bottom right */}
+      <Badge
+        className="absolute bottom-2 right-2 text-xs font-semibold shadow-lg bg-black/70 text-white hover:bg-black/80"
+      >
+        {meal.caloriesPlanned} kcal
+      </Badge>
+      
+      {/* Completed icon - top right */}
       {meal.status === 'completed' && (
-        <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1 shadow-lg animate-in fade-in zoom-in duration-300">
-          <CheckCircle className="h-4 w-4 text-white" />
+        <div className="absolute top-2 right-2 bg-success rounded-full p-1 shadow-lg animate-in fade-in zoom-in duration-300">
+          <CheckCircle className="h-4 w-4 text-success-foreground" />
         </div>
       )}
       
@@ -74,10 +81,10 @@ export function MealMiniature({ meal }: MealMiniatureProps) {
       
       {/* Multi-portion badge */}
       {meal.portionsToShow && (
-        <Badge 
+        <Badge
           className={cn(
             "absolute top-2 left-2 text-xs shadow-lg",
-            meal.isLeftover ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-500 hover:bg-blue-600"
+            meal.isLeftover ? "bg-warning hover:bg-warning/80" : "bg-info hover:bg-info/80"
           )}
         >
           {meal.portionsToShow}

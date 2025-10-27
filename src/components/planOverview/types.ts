@@ -38,6 +38,7 @@ export interface MealMiniatureViewModel {
   status: 'planned' | 'completed' | 'skipped'
   recipeName: string
   recipeImage: string | null
+  caloriesPlanned: number
   isLeftover: boolean
   portionsToShow: string | null // np. "Ugotuj na 2 dni" lub "Resztki"
 }

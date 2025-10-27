@@ -9,7 +9,7 @@ import type {
 } from "./types";
 
 const DEFAULT_LIMIT = 10;
-const DEV_USER_ID = "321a3490-fa8f-43ee-82c5-9efdfe027603"; // hardcoded for local dev
+const DEV_USER_ID = "1e486c09-70e2-4acc-913d-7b500bbde2ca"; // hardcoded for local dev
 
 function formatDateLabel(iso: string): string {
   try {
@@ -76,7 +76,8 @@ export function usePlansQuery() {
           state: dto.state,
           isActive: dto.state === "active",
         }));
-        const hasActivePlan: ActivePlanPresence = json.data.some((d: any) => d.state === "active");
+        // Check for active plan across ALL user's plans, not just filtered ones
+        const hasActivePlan: ActivePlanPresence = json.has_active_plan ?? json.data.some((d: any) => d.state === "active");
         const pagination = toPaginationState(json.pagination);
         setState({
           status: "success",

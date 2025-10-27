@@ -6,7 +6,7 @@ import { useState } from 'react'
 import type { UpdatePlanCommand } from '@/types'
 import type { UsePlanActionsResult, ApiError } from './types'
 
-export function usePlanActions(planId: number, onSuccess: () => void): UsePlanActionsResult {
+export function usePlanActions(planId: number, onSuccess: (action?: 'archive' | 'cancel') => void): UsePlanActionsResult {
   const [isArchiving, setIsArchiving] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
@@ -14,16 +14,17 @@ export function usePlanActions(planId: number, onSuccess: () => void): UsePlanAc
   const archivePlan = async () => {
     setIsArchiving(true)
     setError(null)
-    
+
     try {
-      const body: UpdatePlanCommand = { state: 'completed' }
-      
+      // Map UI state 'completed' to database state 'archived'
+      const body: UpdatePlanCommand = { state: 'archived' }
+
       const response = await fetch(`/api/plans/${planId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         throw {
@@ -31,8 +32,8 @@ export function usePlanActions(planId: number, onSuccess: () => void): UsePlanAc
           message: errorText || 'Failed to archive plan'
         }
       }
-      
-      onSuccess()
+
+      onSuccess('archive')
     } catch (err) {
       const apiError = err as ApiError
       setError(apiError)
@@ -45,16 +46,16 @@ export function usePlanActions(planId: number, onSuccess: () => void): UsePlanAc
   const cancelPlan = async () => {
     setIsCancelling(true)
     setError(null)
-    
+
     try {
       const body: UpdatePlanCommand = { state: 'cancelled' }
-      
+
       const response = await fetch(`/api/plans/${planId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
-      
+
       if (!response.ok) {
         const errorText = await response.text()
         throw {
@@ -62,8 +63,8 @@ export function usePlanActions(planId: number, onSuccess: () => void): UsePlanAc
           message: errorText || 'Failed to cancel plan'
         }
       }
-      
-      onSuccess()
+
+      onSuccess('cancel')
     } catch (err) {
       const apiError = err as ApiError
       setError(apiError)

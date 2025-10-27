@@ -13,9 +13,12 @@ export function transformToPlanOverview(data: PlanDetailsResponse): PlanOverview
   const allMeals = data.days.flatMap(day => day.meals)
   const completedMeals = allMeals.filter(m => m.status === 'completed')
   
+  // Map database state 'archived' to UI state 'completed'
+  const state = data.state === 'archived' ? 'completed' : data.state
+  
   return {
     id: data.id,
-    state: data.state,
+    state: state as 'active' | 'completed' | 'cancelled',
     startDate: data.start_date,
     endDate: data.end_date,
     totalDays: data.days.length,
@@ -80,6 +83,7 @@ export function transformToMealMiniature(meal: MealResponse): MealMiniatureViewM
     status: meal.status,
     recipeName: meal.recipe.name,
     recipeImage: meal.recipe.image_url,
+    caloriesPlanned: Math.round(meal.calories_planned),
     isLeftover: meal.is_leftover,
     portionsToShow
   }

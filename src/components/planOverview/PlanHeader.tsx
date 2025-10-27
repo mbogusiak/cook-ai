@@ -21,8 +21,8 @@ interface PlanHeaderProps {
 function getStateBadge(state: PlanState) {
   const badges = {
     active: { variant: 'default' as const, text: 'Aktywny', className: '' },
-    completed: { variant: 'default' as const, text: 'Ukończony', className: 'bg-green-500' },
-    cancelled: { variant: 'destructive' as const, text: 'Anulowany', className: '' }
+    completed: { variant: 'default' as const, text: 'Ukończony', className: 'bg-success' },
+    cancelled: { variant: 'destructive' as const, text: 'Anulowany', className: 'bg-destructive' }
   }
   return badges[state]
 }
@@ -32,11 +32,11 @@ function getStateBadge(state: PlanState) {
  */
 function getCompletionBadge(percentage: number) {
   if (percentage >= 90) {
-    return { text: 'Gotowy do archiwizacji', className: 'text-green-600' }
+    return { text: 'Gotowy do archiwizacji', className: 'text-success' }
   } else if (percentage >= 50) {
-    return { text: 'W trakcie', className: 'text-amber-600' }
+    return { text: 'W trakcie', className: 'text-warning' }
   } else {
-    return { text: 'Rozpoczęty', className: 'text-slate-600' }
+    return { text: 'Rozpoczęty', className: 'text-muted-foreground' }
   }
 }
 

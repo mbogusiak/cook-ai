@@ -34,3 +34,4 @@ export function getColorFromString(str: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
+

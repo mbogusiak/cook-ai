@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import PlansToolbar from "./PlansToolbar";
 import PlansListContent from "./PlansListContent";
 import PaginationControls from "./PaginationControls";
@@ -20,15 +21,27 @@ export default function PlansList(): JSX.Element {
   };
 
   if (state.status === "loading" || state.status === "idle") {
+    const hasActivePlan = state.data?.hasActivePlan ?? false;
     return (
       <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6" aria-busy>
         <aside className="hidden md:block" />
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Twoje plany</h1>
-            <Button asChild>
-              <a href="/onboarding">Generuj plan</a>
-            </Button>
+            {hasActivePlan ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button disabled>
+                    Generuj plan
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={4}>użytkownik może mieć tylko jeden aktywny plan</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button asChild>
+                <a href="/onboarding">Generuj plan</a>
+              </Button>
+            )}
           </div>
           <SkeletonList />
         </div>
@@ -57,6 +70,23 @@ export default function PlansList(): JSX.Element {
         <LeftSidebar hasActivePlan={vm.hasActivePlan} />
       </aside>
       <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Twoje plany</h1>
+          {vm.hasActivePlan ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button disabled>
+                  Generuj plan
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={4}>użytkownik może mieć tylko jeden aktywny plan</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button asChild>
+              <a href="/onboarding">Generuj plan</a>
+            </Button>
+          )}
+        </div>
         <PlansToolbar state={params.state ?? "all"} total={vm.total} onStateChange={onStateChange} />
         <PlansListContent items={vm.items} hasActivePlan={vm.hasActivePlan} />
         <PaginationControls pagination={vm.pagination} onChange={onPageChange} />

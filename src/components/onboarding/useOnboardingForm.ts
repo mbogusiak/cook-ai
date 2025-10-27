@@ -64,12 +64,12 @@ export function useOnboardingForm() {
     return Object.keys(nextErrors).length === 0
   }
 
-  async function submit(): Promise<boolean> {
+  async function submit(): Promise<number | null> {
     setServerMessage("")
     setIsSubmitting(true)
     try {
       // Development: Use fixed user ID
-      const userId = "321a3490-fa8f-43ee-82c5-9efdfe027603"
+      const userId = "1e486c09-70e2-4acc-913d-7b500bbde2ca"
 
       // 1) Create user-settings
       const settingsBody: CreateUserSettingsCommand = {
@@ -85,7 +85,7 @@ export function useOnboardingForm() {
       if (!usRes.ok && usRes.status !== 409) {
         const text = await usRes.text()
         setServerMessage(`Błąd tworzenia ustawień: ${text}`)
-        return false
+        return null
       }
 
       // 2) Generate plan
@@ -103,14 +103,23 @@ export function useOnboardingForm() {
       if (!genRes.ok) {
         const text = await genRes.text()
         setServerMessage(`Błąd generowania planu: ${text}`)
-        return false
+        return null
+      }
+
+      // Extract plan ID from response
+      const planData = await genRes.json()
+      const planId = planData.id
+
+      if (!planId) {
+        setServerMessage("Błąd: Nie otrzymano ID planu")
+        return null
       }
 
       setServerMessage("Sukces! Przekierowanie...")
-      return true
+      return planId
     } catch (e) {
       setServerMessage("Wystąpił błąd sieci. Spróbuj ponownie.")
-      return false
+      return null
     } finally {
       setIsSubmitting(false)
     }
