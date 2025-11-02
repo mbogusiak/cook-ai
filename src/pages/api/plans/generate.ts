@@ -30,6 +30,7 @@ export const prerender = false
  *   "state": "active",
  *   "start_date": "2025-10-20",
  *   "end_date": "2025-10-26",
+ *   "daily_calories": 2000,
  *   "created_at": "2025-10-17T14:30:00Z",
  *   "updated_at": "2025-10-17T14:30:00Z"
  * }

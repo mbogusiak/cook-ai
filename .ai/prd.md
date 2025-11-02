@@ -38,7 +38,9 @@ Wiele osób, które chcą świadomie zarządzać swoją dietą, napotyka na szer
 
 ### 5.1. Uwierzytelnianie użytkownika
 
-- Rejestracja i logowanie wyłącznie za pośrednictwem dostawców zewnętrznych: Google i Facebook.
+- Rejestracja i logowanie za pomocą adresu email i hasła.
+- Walidacja formatu email i wymagania dotyczące siły hasła (min. 8 znaków).
+- Funkcjonalność resetowania hasła (forgot password) z linkiem weryfikacyjnym wysyłanym na email.
 - Utrzymywanie sesji użytkownika po pomyślnym zalogowaniu.
 - Brak trybu gościa.
 
@@ -111,7 +113,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 ### W zakresie (In Scope)
 
 - Aplikacja webowa (RWD).
-- Uwierzytelnianie przez Google/Facebook.
+- Uwierzytelnianie przez email i hasło.
 - Wykorzystanie bazy Cookido.
 - Generowanie planu z logiką posiłków wieloporcjowych.
 - Funkcjonalność wymiany, pomijania i oznaczania posiłków.
@@ -132,27 +134,29 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 
 #### ID: US-001
 
-**Tytuł**: Logowanie przez Google
+**Tytuł**: Rejestracja nowego użytkownika
 
-**Opis**: Jako nowy lub powracający użytkownik, chcę zalogować się do aplikacji za pomocą mojego konta Google, aby uzyskać szybki i bezpieczny dostęp do moich planów.
+**Opis**: Jako nowy użytkownik, chcę zarejestrować się w aplikacji za pomocą adresu email i hasła, aby móc korzystać z planera żywieniowego.
 
 **Kryteria akceptacji**:
-- Na stronie logowania znajduje się przycisk "Zaloguj się przez Google".
-- Po kliknięciu przycisku użytkownik jest przekierowywany do standardowego okna uwierzytelniania Google.
-- Po pomyślnym uwierzytelnieniu w Google, użytkownik jest zalogowany w aplikacji i przekierowany do głównego widoku (lub kreatora planu, jeśli loguje się po raz pierwszy).
-- W przypadku błędu uwierzytelnienia, użytkownik widzi stosowny komunikat.
+- Na stronie rejestracji znajduje się formularz z polami: email, hasło, potwierdzenie hasła.
+- Email musi być w poprawnym formacie (walidacja po stronie klienta i serwera).
+- Hasło musi mieć minimum 8 znaków.
+- Pola "hasło" i "potwierdzenie hasła" muszą być identyczne.
+- Po pomyślnej rejestracji użytkownik jest zalogowany i przekierowany do kreatora planu.
+- W przypadku błędu (np. email już istnieje, słabe hasło), użytkownik widzi stosowny komunikat walidacyjny.
 
 #### ID: US-002
 
-**Tytuł**: Logowanie przez Facebook
+**Tytuł**: Logowanie istniejącego użytkownika
 
-**Opis**: Jako nowy lub powracający użytkownik, chcę zalogować się do aplikacji za pomocą mojego konta Facebook, aby uzyskać szybki i bezpieczny dostęp do moich planów.
+**Opis**: Jako powracający użytkownik, chcę zalogować się do aplikacji za pomocą mojego adresu email i hasła, aby uzyskać dostęp do moich planów.
 
 **Kryteria akceptacji**:
-- Na stronie logowania znajduje się przycisk "Zaloguj się przez Facebook".
-- Po kliknięciu przycisku użytkownik jest przekierowywany do standardowego okna uwierzytelniania Facebook.
-- Po pomyślnym uwierzytelnieniu w Facebooku, użytkownik jest zalogowany w aplikacji i przekierowany do głównego widoku.
-- W przypadku błędu uwierzytelnienia, użytkownik widzi stosowny komunikat.
+- Na stronie logowania znajduje się formularz z polami: email i hasło.
+- Po wprowadzeniu poprawnych danych i kliknięciu "Zaloguj", użytkownik jest zalogowany i przekierowany do głównego widoku aplikacji.
+- W przypadku błędnych danych logowania (nieprawidłowy email lub hasło), użytkownik widzi komunikat błędu.
+- Sesja użytkownika jest utrzymywana po pomyślnym zalogowaniu.
 
 #### ID: US-003
 
@@ -164,9 +168,26 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - W interfejsie aplikacji (np. w menu użytkownika) znajduje się przycisk/link "Wyloguj".
 - Po kliknięciu "Wyloguj", sesja użytkownika zostaje zakończona, a on sam jest przekierowany na stronę logowania.
 
+#### ID: US-004
+
+**Tytuł**: Resetowanie hasła
+
+**Opis**: Jako użytkownik, który zapomniał hasła, chcę móc zresetować je za pomocą linku wysłanego na mój adres email, aby odzyskać dostęp do mojego konta.
+
+**Kryteria akceptacji**:
+- Na stronie logowania znajduje się link "Zapomniałeś hasła?" prowadzący do formularza resetowania.
+- Formularz resetowania zawiera pole email z walidacją formatu.
+- Po wysłaniu żądania użytkownik otrzymuje email z linkiem do resetowania hasła.
+- Link jest ważny przez określony czas (np. 1 godzinę).
+- Po kliknięciu w link z emaila użytkownik jest przekierowany do formularza ustawienia nowego hasła.
+- Formularz ustawienia nowego hasła zawiera pola: nowe hasło, potwierdzenie nowego hasła.
+- Nowe hasło musi spełniać te same wymagania co przy rejestracji (min. 8 znaków).
+- Po pomyślnym ustawieniu nowego hasła użytkownik jest przekierowany do strony logowania z komunikatem o sukcesie.
+- W przypadku wygasłego lub nieprawidłowego linku użytkownik widzi przyjazny komunikat z możliwością ponownego wysłania linku.
+
 ### Onboarding i generowanie planu
 
-#### ID: US-004
+#### ID: US-005
 
 **Tytuł**: Konfiguracja celu kalorycznego i długości planu
 
@@ -178,7 +199,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Pola formularza mają walidację (np. kalorie muszą być liczbą dodatnią).
 - Po wypełnieniu danych użytkownik może przejść do następnego kroku.
 
-#### ID: US-005
+#### ID: US-006
 
 **Tytuł**: Wybór daty rozpoczęcia planu
 
@@ -192,7 +213,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 
 
 
-#### ID: US-006
+#### ID: US-007
 
 **Tytuł**: Generowanie planu żywieniowego
 
@@ -208,7 +229,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 
 ### Przeglądanie i interakcje z planem
 
-#### ID: US-007
+#### ID: US-008
 
 **Tytuł**: Przeglądanie planu dziennego
 
@@ -221,7 +242,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Każda karta posiłku zawiera link do oryginalnego przepisu na Cookido.
 - Posiłki, które są zaplanowane na dwa dni, mają wyraźne oznaczenia wizualne (np. ikona "x2" pierwszego dnia i ikona "resztki" drugiego dnia).
 
-#### ID: US-008
+#### ID: US-009
 
 **Tytuł**: Nawigacja między dniami planu
 
@@ -232,7 +253,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Użytkownik może nawigować tylko w obrębie dat swojego aktywnego planu.
 - Plan jest prezentowany w widoku dziennym z nawigacją między dniami.
 
-#### ID: US-009
+#### ID: US-010
 
 **Tytuł**: Oznaczanie posiłku jako 'Ukończony'
 
@@ -244,7 +265,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Zmiana statusu jest automatycznie zapisywana (autozapis).
 - Użytkownik może zmienić status posiłku na jeden z trzech: zaplanowany (domyślny), ukończony, pominięty.
 
-#### ID: US-010
+#### ID: US-011
 
 **Tytuł**: Oznaczanie posiłku jako 'Pominięty'
 
@@ -256,7 +277,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Zmiana statusu jest automatycznie zapisywana.
 - Kalorie z pominiętego posiłku nie są dodawane do innych posiłków.
 
-#### ID: US-011
+#### ID: US-012
 
 **Tytuł**: Inicjowanie wymiany posiłku
 
@@ -267,7 +288,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Po kliknięciu przycisku, system wyświetla interfejs wyboru alternatywnego posiłku.
 - Użytkownik może wymienić każdy zaplanowany posiłek.
 
-#### ID: US-012
+#### ID: US-013
 
 **Tytuł**: Wyświetlanie i wybór alternatyw dla posiłku
 
@@ -282,7 +303,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Po wymianie posiłku, który był zaplanowany na dwa dni (wymiana w dniu 1), posiłek w dniu 2 jest również usuwany i zastępowany nową propozycją.
 - Po wymianie posiłku "resztkowego" (wymiana w dniu 2), posiłek z dnia 1 pozostaje bez zmian.
 
-#### ID: US-013
+#### ID: US-014
 
 **Tytuł**: Automatyczny zapis zmian w planie
 
@@ -293,7 +314,7 @@ Plan jest uznawany za ukończony, gdy co najmniej 90% posiłków zostanie oznacz
 - Pomyślna wymiana posiłku jest natychmiast zapisywana i odzwierciedlona w widoku planu.
 - Wszystkie zmiany w planie (zmiana statusu, wymiana posiłku) są zapisywane automatycznie.
 
-#### ID: US-014
+#### ID: US-015
 
 **Tytuł**: Oszczędność czasu dzięki posiłkom wieloporcjowym
 

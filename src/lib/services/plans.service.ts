@@ -335,7 +335,8 @@ export async function generatePlan(
         user_id: userId,
         start_date: command.start_date,
         end_date: endDate,
-        state: 'active'
+        state: 'active',
+        daily_calories: command.daily_calories
       })
       .select()
       .single()
@@ -571,6 +572,7 @@ export async function generatePlan(
       state: planData.state as Enums<'plan_state'>,
       start_date: planData.start_date,
       end_date: planData.end_date,
+      daily_calories: planData.daily_calories,
       created_at: planData.created_at,
       updated_at: planData.updated_at
     }
@@ -618,7 +620,7 @@ export async function getPlanDetailsWithMeals(
     // Step 1: Fetch main plan record with authorization check
     const { data: planData, error: planError } = await supabase
       .from('plans')
-      .select('id, user_id, state, start_date, end_date, created_at, updated_at')
+      .select('id, user_id, state, start_date, end_date, daily_calories, created_at, updated_at')
       .eq('id', planId)
       .eq('user_id', userId)
       .single()
@@ -775,6 +777,7 @@ export async function getPlanDetailsWithMeals(
       state: planData.state as Enums<'plan_state'>,
       start_date: planData.start_date,
       end_date: planData.end_date,
+      daily_calories: planData.daily_calories,
       created_at: planData.created_at,
       updated_at: planData.updated_at,
       days
@@ -976,6 +979,7 @@ export async function getPlanById(
       state: planData.state as Enums<'plan_state'>,
       start_date: planData.start_date,
       end_date: planData.end_date,
+      daily_calories: planData.daily_calories,
       created_at: planData.created_at,
       updated_at: planData.updated_at,
       days
@@ -1047,12 +1051,12 @@ export async function updatePlanState(
     // Step 3: Update plan state
     const { data: updatedPlan, error: updateError } = await supabase
       .from('plans')
-      .update({ 
+      .update({
         state: newState,
         updated_at: new Date().toISOString()
       })
       .eq('id', planId)
-      .select('id, user_id, state, start_date, end_date, created_at, updated_at')
+      .select('id, user_id, state, start_date, end_date, daily_calories, created_at, updated_at')
       .single()
 
     if (updateError) {
@@ -1071,6 +1075,7 @@ export async function updatePlanState(
       state: updatedPlan.state as Enums<'plan_state'>,
       start_date: updatedPlan.start_date,
       end_date: updatedPlan.end_date,
+      daily_calories: updatedPlan.daily_calories,
       created_at: updatedPlan.created_at,
       updated_at: updatedPlan.updated_at
     }

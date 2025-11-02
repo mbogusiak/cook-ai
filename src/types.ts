@@ -97,7 +97,7 @@ export type UpdateUserSettingsCommand = {
  */
 export type PlanDTO = Pick<
   Tables<'plans'>,
-  'id' | 'user_id' | 'state' | 'start_date' | 'end_date' | 'created_at' | 'updated_at'
+  'id' | 'user_id' | 'state' | 'start_date' | 'end_date' | 'daily_calories' | 'created_at' | 'updated_at'
 >
 
 /**
