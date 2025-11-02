@@ -6,9 +6,6 @@ import { NotFoundError, ForbiddenError, ServerError } from '../../../lib/errors'
 
 export const prerender = false
 
-// TODO: Remove hardcoded userId when authentication is implemented
-const TEMP_USER_ID = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
-
 // Validation schema for PATCH request body
 const updatePlanCommandSchema = z.object({
   state: z.enum(['active', 'archived', 'cancelled']).describe('New plan state')
@@ -19,7 +16,7 @@ const updatePlanCommandSchema = z.object({
  * 
  * Fetch complete plan details with nested days, meals, and recipes.
  * 
- * NOTE: Currently uses hardcoded user_id. Authentication will be added in a separate step.
+ * Note: user_id is automatically taken from the authenticated session
  * 
  * Path Parameters:
  * - id: Plan ID (positive integer)
@@ -47,6 +44,7 @@ const updatePlanCommandSchema = z.object({
  * }
  * 
  * Error Responses:
+ * - 401: Unauthorized (user not authenticated)
  * - 400: Invalid plan ID format
  * - 404: Plan not found
  * - 500: Internal server error
@@ -75,14 +73,30 @@ export const GET: APIRoute = async (context) => {
 
     const planId = validationResult.data.id
 
-    // Step 2: Fetch plan from service (using hardcoded userId for now)
-    const plan = await getPlanById(context.locals.supabase, planId, TEMP_USER_ID)
+    // Step 2: Check authentication
+    const user = context.locals.user
+    if (!user || !user.id) {
+      console.warn('[GET /api/plans/:id] User not authenticated', {
+        planId
+      })
 
-    // Step 3: Handle not found
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // Step 3: Fetch plan from service using authenticated user_id
+    const plan = await getPlanById(context.locals.supabase, planId, user.id)
+
+    // Step 4: Handle not found
     if (!plan) {
       console.warn('[GET /api/plans/:id] Plan not found:', {
         planId,
-        userId: TEMP_USER_ID
+        userId: user.id
       })
 
       return new Response(
@@ -94,7 +108,7 @@ export const GET: APIRoute = async (context) => {
       )
     }
 
-    // Step 4: Success response
+    // Step 5: Success response
     return new Response(
       JSON.stringify({ data: plan }),
       {
@@ -151,6 +165,7 @@ export const GET: APIRoute = async (context) => {
  * }
  *
  * Error Responses:
+ * - 401: Unauthorized (user not authenticated)
  * - 400: Invalid plan ID or request body
  * - 403: User doesn't own the plan
  * - 404: Plan not found
@@ -219,12 +234,28 @@ export const PATCH: APIRoute = async (context) => {
 
     const command = commandResult.data
 
-    // Step 3: Update plan state
+    // Step 3: Check authentication
+    const user = context.locals.user
+    if (!user || !user.id) {
+      console.warn('[PATCH /api/plans/:id] User not authenticated', {
+        planId
+      })
+
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // Step 4: Update plan state
     try {
       const updatedPlan = await updatePlanState(
         context.locals.supabase,
         planId,
-        TEMP_USER_ID,
+        user.id,
         command.state as any
       )
 

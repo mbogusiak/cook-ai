@@ -12,16 +12,14 @@ export const prerender = false
  * 
  * Generates a new meal plan for a user.
  * 
- * TEMPORARY: Accepts user_id in request body (will be replaced with session auth)
- * TODO: Add authentication via context.locals.session in separate step
- * 
  * Request Body:
  * {
- *   "user_id": "550e8400-e29b-41d4-a716-446655440000",
  *   "daily_calories": number (800-6000),
  *   "plan_length_days": number (1-365),
  *   "start_date": string (ISO 8601, future date)
  * }
+ * 
+ * Note: user_id is automatically taken from the authenticated session
  * 
  * Success Response: 201 Created
  * {
@@ -36,6 +34,7 @@ export const prerender = false
  * }
  * 
  * Error Responses:
+ * - 401 Unauthorized: User not authenticated
  * - 400 Bad Request: Invalid input data or validation failure
  * - 409 Conflict: User already has an active plan
  * - 500 Internal Server Error: Unexpected server error
@@ -107,25 +106,26 @@ export const POST: APIRoute = async (context) => {
     }
 
     // =========================================================================
-    // STEP 3: Extract user_id from request body (TEMPORARY)
+    // STEP 3: Get user_id from authenticated session
     // =========================================================================
 
-    const body = requestBody as Record<string, unknown>
-    userId = body.user_id as string
-
-    if (!userId || typeof userId !== 'string') {
-      console.warn('[POST /api/plans/generate] Missing or invalid user_id', { userId })
+    const user = context.locals.user
+    if (!user || !user.id) {
+      console.warn('[POST /api/plans/generate] User not authenticated')
 
       return new Response(
         JSON.stringify({
-          error: 'user_id is required and must be a string'
+          error: 'Authentication required'
         }),
         {
-          status: 400,
+          status: 401,
           headers: { 'Content-Type': 'application/json' }
         }
       )
     }
+
+    userId = user.id
+    const body = requestBody as Record<string, unknown>
 
     // =========================================================================
     // STEP 4: Validate Input with Zod Schema
@@ -133,10 +133,12 @@ export const POST: APIRoute = async (context) => {
 
     let command
     try {
+      // Remove user_id from body as it comes from session
+      const { user_id: _, ...planData } = body
       command = createPlanCommandSchema.parse({
-        daily_calories: body.daily_calories,
-        plan_length_days: body.plan_length_days,
-        start_date: body.start_date
+        daily_calories: planData.daily_calories,
+        plan_length_days: planData.plan_length_days,
+        start_date: planData.start_date
       })
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -1,13 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getPlanDay } from '@/lib/services/planDays.service';
-import { updateMealStatus } from '@/lib/services/planMeals.service';
-import { getSupabaseBrowserClient } from '@/db/supabase.browser.client';
 import type { PlanDayViewModel, MealViewModel, MealSlotViewModel } from './types';
 import type { PlanDayDTO, DayMealDTO } from '@/lib/services/planDays.service';
 import type { Enums } from '@/db/database.types';
 import type { RecipeDTO } from '@/types';
-
-const DEV_USER_ID = "1e486c09-70e2-4acc-913d-7b500bbde2ca"; // hardcoded for local dev
 
 // Transformation function
 const transformToPlanDayViewModel = (dto: PlanDayDTO): PlanDayViewModel => {
@@ -64,7 +59,13 @@ export const usePlanDayQuery = (planId: number, date: string) => {
     return useQuery({
         queryKey: ['planDay', planId, date],
         queryFn: async () => {
-            const data = await getPlanDay(getSupabaseBrowserClient(), planId, date, DEV_USER_ID);
+            const response = await fetch(`/api/plans/${planId}/days/${date}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to fetch plan day');
+            }
+            const result = await response.json();
+            const data = result.data as PlanDayDTO;
             if (!data) {
                 throw new Error('Plan day not found');
             }
@@ -77,8 +78,22 @@ export const usePlanDayQuery = (planId: number, date: string) => {
 export const useUpdateMealStatus = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ mealId, status }: { mealId: number; status: Enums<'meal_status'> }) => {
-            return updateMealStatus(getSupabaseBrowserClient(), mealId, DEV_USER_ID, status);
+        mutationFn: async ({ mealId, status }: { mealId: number; status: Enums<'meal_status'> }) => {
+            const response = await fetch(`/api/plan-meals/${mealId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update meal status');
+            }
+
+            const result = await response.json();
+            return result.data;
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['planDay'] });

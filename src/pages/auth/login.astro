@@ -1,0 +1,104 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { AuthLoginForm } from "../../components/auth/AuthLoginForm.tsx";
+
+// SSR Guard: If already logged in, redirect based on active plan or next parameter
+const { user } = Astro.locals;
+const nextParam = Astro.url.searchParams.get('next');
+
+if (user) {
+  // If next parameter is provided, redirect there
+  if (nextParam) {
+    return Astro.redirect(decodeURIComponent(nextParam));
+  }
+
+  // Check if user has active plan
+  const supabase = Astro.locals.supabase;
+  try {
+    const { data: activePlan, error } = await supabase
+      .from('plans')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('state', 'active')
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = no rows found, which is expected
+      console.error('Error checking active plan:', error);
+    }
+
+    // Redirect based on active plan status
+    if (activePlan && activePlan.id) {
+      return Astro.redirect('/dashboard');
+    } else {
+      return Astro.redirect('/onboarding');
+    }
+  } catch (err) {
+    console.error('Error in login redirect:', err);
+    // Default to onboarding on error
+    return Astro.redirect('/onboarding');
+  }
+}
+---
+
+<Layout title="Logowanie">
+  <div class="min-h-screen mx-auto max-w-2xl px-4 py-8">
+    <div class="w-full">
+      {/* Top Icon */}
+      <div class="flex justify-center mb-8">
+        <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-primary"
+          >
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Title */}
+      <h1 class="text-4xl font-bold text-center mb-2">Zaloguj się</h1>
+      <p class="text-center text-muted-foreground mb-8">
+        Wprowadź swoje dane, aby kontynuować
+      </p>
+
+      {/* Form */}
+      <AuthLoginForm client:load />
+
+      {/* Link to Password Reset */}
+      <div class="mt-6 text-center">
+        <a
+          href="/auth/reset"
+          class="text-sm text-primary underline hover:text-primary/80"
+        >
+          Zapomniałeś hasła?
+        </a>
+      </div>
+
+      {/* Link to Register */}
+      <div class="mt-4 text-center">
+        <p class="text-sm text-muted-foreground">
+          Nie masz konta?{" "}
+          <a
+            href="/auth/register"
+            class="text-primary underline hover:text-primary/80"
+          >
+            Zarejestruj się
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>
+

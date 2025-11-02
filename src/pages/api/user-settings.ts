@@ -11,12 +11,11 @@ export const prerender = false
  * 
  * Request Body:
  * {
- *   "user_id": "550e8400-e29b-41d4-a716-446655440000",
  *   "default_daily_calories": 2000,
  *   "default_plan_length_days": 7 (optional, default: 7)
  * }
  * 
- * Note: Authentication will be added in a separate implementation step
+ * Note: user_id is automatically taken from the authenticated session
  * 
  * Success Response: 201 Created
  * {
@@ -30,6 +29,7 @@ export const prerender = false
  * }
  * 
  * Error Responses:
+ * - 401 Unauthorized: User not authenticated
  * - 400 Bad Request: Invalid input data or malformed JSON
  * - 409 Conflict: User settings already exist
  * - 500 Internal Server Error: Database or server error
@@ -58,7 +58,24 @@ export const POST: APIRoute = async (context) => {
       )
     }
 
-    // Step 2: Parse request body as JSON
+    // Step 2: Check authentication
+    const user = context.locals.user
+    if (!user || !user.id) {
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'Authentication required'
+          }
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // Step 3: Parse request body as JSON
     let requestBody: unknown
     try {
       const bodyText = await context.request.text()
@@ -92,8 +109,14 @@ export const POST: APIRoute = async (context) => {
       )
     }
 
-    // Step 3: Validate input data and create user settings
-    const command = requestBody as CreateUserSettingsCommand
+    // Step 4: Validate input data and create user settings
+    // Use user_id from session instead of request body
+    const body = requestBody as { default_daily_calories?: number; default_plan_length_days?: number }
+    const command: CreateUserSettingsCommand = {
+      user_id: user.id,
+      default_daily_calories: body.default_daily_calories!,
+      default_plan_length_days: body.default_plan_length_days
+    }
     const result = await createUserSettings(supabase, command)
 
     // Step 4: Handle errors from service layer

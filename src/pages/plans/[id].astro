@@ -3,13 +3,18 @@
  * Plan Overview Page
  * Dynamic route for viewing plan details
  * Path: /plans/{id}
- * 
- * Note: Currently accessible without authentication
- * Authentication will be added in a separate step
  */
 
 import Layout from '@/layouts/Layout.astro'
 import { PlanOverviewContent } from '@/components/planOverview/PlanOverviewContent'
+
+// SSR Guard: Redirect to login if not authenticated
+const { user } = Astro.locals;
+
+if (!user) {
+  const redirectUrl = `/auth/login?next=${encodeURIComponent(Astro.url.pathname)}`;
+  return Astro.redirect(redirectUrl);
+}
 
 // Get plan ID from URL params
 const { id } = Astro.params

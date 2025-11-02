@@ -1,12 +1,20 @@
 import React from "react"
-import { ChefHat, Flame, Calendar } from "lucide-react"
+import { ChefHat, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { useOnboardingForm } from "./useOnboardingForm.ts"
 import { PlanGeneratorForm } from "./PlanGeneratorForm.tsx"
 import { StartDateSelector } from "./StartDateSelector.tsx"
 import { BlockingLoader } from "./BlockingLoader.tsx"
 
-export default function OnboardingPage(): React.ReactElement {
+interface OnboardingPageProps {
+  initialUser?: {
+    id: string
+    email?: string
+  }
+}
+
+export default function OnboardingPage({ initialUser }: OnboardingPageProps): React.ReactElement {
   const {
     values,
     errors,
@@ -15,14 +23,21 @@ export default function OnboardingPage(): React.ReactElement {
     validate,
     submit,
     serverMessage,
-  } = useOnboardingForm()
+    clearServerMessage,
+  } = useOnboardingForm({ initialUser })
 
   const [step, setStep] = React.useState<1 | 2>(1)
 
   function goNext(): void {
     const isValid = validate({ validateStartDate: false })
     if (!isValid) return
+    clearServerMessage()
     setStep(2)
+  }
+
+  function goBack(): void {
+    clearServerMessage()
+    setStep(1)
   }
 
   async function handleGenerate(): Promise<void> {
@@ -59,6 +74,32 @@ export default function OnboardingPage(): React.ReactElement {
         />
       </div>
 
+      {/* Error/Message Display */}
+      {serverMessage && (
+        <Card 
+          role="alert" 
+          aria-live="polite" 
+          className={serverMessage.includes("Zaloguj się") 
+            ? "border-warning bg-warning/10 mb-6" 
+            : "border-muted mb-6"
+          }
+        >
+          <CardContent className="flex items-center justify-center py-3">
+            <div className="flex items-center justify-center gap-3">
+              {serverMessage.includes("Zaloguj się") && (
+                <AlertCircle className="h-5 w-5 text-warning flex-shrink-0" />
+              )}
+              <p className={serverMessage.includes("Zaloguj się") 
+                ? "text-foreground font-medium" 
+                : "text-muted-foreground text-sm"
+              }>
+                {serverMessage}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Form Content */}
       {step === 1 ? (
         <PlanGeneratorForm
@@ -75,20 +116,13 @@ export default function OnboardingPage(): React.ReactElement {
         />
       )}
 
-      {/* Error/Message Display */}
-      {serverMessage && (
-        <p role="status" aria-live="polite" className="text-sm text-muted-foreground text-center mb-6">
-          {serverMessage}
-        </p>
-      )}
-
       {/* Button Container */}
       <div className="flex gap-3 mt-8">
         {step === 2 && (
           <Button
             variant="outline"
             type="button"
-            onClick={() => setStep(1)}
+            onClick={goBack}
             disabled={isSubmitting}
             className="flex-1"
           >

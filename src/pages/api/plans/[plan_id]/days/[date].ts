@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { z } from 'zod'
 import { getPlanDayParamsSchema } from '../../../../../lib/schemas/planDay'
 import { getPlanDay } from '../../../../../lib/services/planDays.service'
-import { AuthenticationError, ServerError, ValidationError } from '../../../../../lib/errors'
+import { AuthenticationError, ServerError, ValidationError, NotFoundError } from '../../../../../lib/errors'
 
 export const prerender = false
 
@@ -12,11 +12,12 @@ export const prerender = false
  */
 export const GET: APIRoute = async (context) => {
   try {
-    // Auth: session from context.locals
-    const session = context.locals.session
+    // Check authentication
+    const user = context.locals.user
     const supabase = context.locals.supabase
 
-    if (!session?.user?.id) {
+    if (!user || !user.id) {
+      console.warn('[GET /api/plans/:plan_id/days/:date] User not authenticated')
       throw new AuthenticationError()
     }
 
@@ -40,8 +41,8 @@ export const GET: APIRoute = async (context) => {
       throw e
     }
 
-    // Fetch plan day
-    const result = await getPlanDay(supabase, session.user.id, params.plan_id, params.date)
+    // Fetch plan day - note: function signature is (supabase, planId, date, userId)
+    const result = await getPlanDay(supabase, params.plan_id, params.date, user.id)
     if (!result) {
       return new Response(
         JSON.stringify({ error: 'Not found' }),
@@ -65,6 +66,13 @@ export const GET: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (error instanceof NotFoundError) {
+      return new Response(
+        JSON.stringify({ error: error.message || 'Not found' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
       )
     }
 

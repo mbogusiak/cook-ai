@@ -1,5 +1,6 @@
 import React from "react"
-import type { CreateUserSettingsCommand, CreatePlanCommand } from "@/types"
+import type { CreatePlanCommand } from "@/types"
+import { useAuth } from "@/components/hooks/useAuth"
 
 type Values = {
   daily_calories: number
@@ -17,7 +18,21 @@ type ValidateOptions = {
   validateStartDate: boolean
 }
 
-export function useOnboardingForm() {
+interface UseOnboardingFormOptions {
+  initialUser?: {
+    id: string
+    email?: string
+  }
+}
+
+export function useOnboardingForm(options?: UseOnboardingFormOptions) {
+  const { user, isLoading: authLoading } = useAuth()
+  const initialUser = options?.initialUser
+  
+  // Use initialUser from SSR if available, otherwise use user from useAuth
+  // This ensures we have user data immediately on first render
+  const currentUser = user || (initialUser ? { id: initialUser.id, email: initialUser.email || undefined } : null)
+  
   const [values, setValues] = React.useState<Values>({
     daily_calories: 2000,
     plan_length_days: 7,
@@ -68,12 +83,22 @@ export function useOnboardingForm() {
     setServerMessage("")
     setIsSubmitting(true)
     try {
-      // Development: Use fixed user ID
-      const userId = "1e486c09-70e2-4acc-913d-7b500bbde2ca"
+      // Check if user is authenticated
+      // Use currentUser which combines SSR and client-side auth
+      if (authLoading && !initialUser) {
+        setServerMessage("Ładowanie danych użytkownika...")
+        return null
+      }
+
+      if (!currentUser || !currentUser.id) {
+        setServerMessage("Zaloguj się, żeby wygenerować plan")
+        setIsSubmitting(false)
+        return null
+      }
 
       // 1) Create user-settings
-      const settingsBody: CreateUserSettingsCommand = {
-        user_id: userId,
+      // Note: user_id is now taken from session on the server
+      const settingsBody = {
         default_daily_calories: values.daily_calories,
         default_plan_length_days: values.plan_length_days,
       }
@@ -89,8 +114,8 @@ export function useOnboardingForm() {
       }
 
       // 2) Generate plan
-      const planBody: CreatePlanCommand & { user_id: string } = {
-        user_id: userId,
+      // Note: user_id is now taken from session on the server
+      const planBody: CreatePlanCommand = {
         daily_calories: values.daily_calories,
         plan_length_days: values.plan_length_days,
         start_date: values.start_date,
@@ -125,6 +150,10 @@ export function useOnboardingForm() {
     }
   }
 
+  function clearServerMessage(): void {
+    setServerMessage("")
+  }
+
   return {
     values,
     errors,
@@ -133,6 +162,9 @@ export function useOnboardingForm() {
     setField,
     validate,
     submit,
+    clearServerMessage,
+    isAuthLoading: authLoading,
+    isAuthenticated: !!currentUser,
   }
 }
 

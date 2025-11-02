@@ -8,6 +8,7 @@ interface Props {
 }
 
 const { title = "10x Astro Starter" } = Astro.props;
+const { user } = Astro.locals;
 ---
 
 <!doctype html>
@@ -20,7 +21,7 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
-    <Header client:load />
+    <Header client:load user={user ? { id: user.id, email: user.email } : undefined} />
     <slot />
   </body>
 </html>

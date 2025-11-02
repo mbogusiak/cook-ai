@@ -1,12 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from './database.types';
 
-let supabaseBrowserClient: ReturnType<typeof createClient<Database>> | null = null;
+let supabaseBrowserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 export const getSupabaseBrowserClient = (
   supabaseUrl?: string,
   supabaseAnonKey?: string
-): ReturnType<typeof createClient<Database>> => {
+): ReturnType<typeof createBrowserClient<Database>> => {
   if (!supabaseBrowserClient) {
     const url = supabaseUrl || import.meta.env.PUBLIC_SUPABASE_URL;
     const key = supabaseAnonKey || import.meta.env.PUBLIC_SUPABASE_KEY;
@@ -15,7 +15,7 @@ export const getSupabaseBrowserClient = (
       throw new Error('Supabase URL and Key are required. Please check your environment variables.');
     }
 
-    supabaseBrowserClient = createClient<Database>(url, key);
+    supabaseBrowserClient = createBrowserClient<Database>(url, key);
   }
   return supabaseBrowserClient;
 };

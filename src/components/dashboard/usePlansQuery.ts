@@ -9,7 +9,6 @@ import type {
 } from "./types";
 
 const DEFAULT_LIMIT = 10;
-const DEV_USER_ID = "1e486c09-70e2-4acc-913d-7b500bbde2ca"; // hardcoded for local dev
 
 function formatDateLabel(iso: string): string {
   try {
@@ -53,7 +52,7 @@ export function usePlansQuery() {
     async function load(): Promise<void> {
       setState({ status: "loading" });
       const qs = new URLSearchParams();
-      qs.set("user_id", DEV_USER_ID); // for local dev
+      // Note: user_id is automatically taken from session on the server
       if (params.state) qs.set("state", params.state);
       qs.set("limit", String(Math.min(Math.max(params.limit, 1), 50)));
       qs.set("offset", String(Math.max(params.offset, 0)));

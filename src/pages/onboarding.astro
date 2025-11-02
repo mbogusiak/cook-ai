@@ -1,11 +1,15 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import OnboardingPage from "../components/onboarding/OnboardingPage.tsx";
+
+// Onboarding is available for both authenticated and unauthenticated users
+// User will be prompted to log in when trying to submit the form
+const { user } = Astro.locals;
 ---
 
 <Layout title="Onboarding">
   <div class="min-h-screen flex items-center justify-center py-8">
-    <OnboardingPage client:load />
+    <OnboardingPage client:load initialUser={user} />
   </div>
 </Layout>
 

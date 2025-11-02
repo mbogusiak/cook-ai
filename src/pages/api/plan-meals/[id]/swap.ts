@@ -18,7 +18,7 @@ export const prerender = false
  * Swaps the recipe assigned to a specific meal in a plan.
  * Can update single meal or all meals in a multi-portion group.
  * 
- * TEMPORARY: No session authentication (will be added in separate step)
+ * Note: user_id is automatically taken from the authenticated session
  * 
  * Request Body:
  * {
@@ -181,22 +181,25 @@ export const POST: APIRoute = async (context) => {
     }
 
     // =========================================================================
-    // STEP 4: Get User Session (Temporary Placeholder)
+    // STEP 4: Check Authentication
     // =========================================================================
 
-    // TODO: Replace with actual session authentication
-    // For now, using a placeholder user ID (hardcoded for local dev)
-    const TEMP_USER_ID = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
+    const user = context.locals.user
+    if (!user || !user.id) {
+      console.warn('[POST /api/plan-meals/{id}/swap] User not authenticated', {
+        planMealId
+      })
 
-    // When auth is implemented, use:
-    // const session = context.locals.session
-    // if (!session) {
-    //   return new Response(
-    //     JSON.stringify({ error: 'Unauthorized' }),
-    //     { status: 401, headers: { 'Content-Type': 'application/json' } }
-    //   )
-    // }
-    // const userId = session.user.id
+      return new Response(
+        JSON.stringify({
+          error: 'Authentication required'
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     // =========================================================================
     // STEP 5: Fetch Plan Meal and Verify Existence
@@ -204,7 +207,8 @@ export const POST: APIRoute = async (context) => {
 
     console.info('[POST /api/plan-meals/{id}/swap] Fetching plan meal', {
       planMealId,
-      newRecipeId: command.new_recipe_id
+      newRecipeId: command.new_recipe_id,
+      userId: user.id
     })
 
     const planMeal = await getPlanMealById(planMealId, supabase)
@@ -226,11 +230,11 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Verify user ownership
-    if (planMeal.user_id !== TEMP_USER_ID) {
+    if (planMeal.user_id !== user.id) {
       console.warn('[POST /api/plan-meals/{id}/swap] Forbidden access', {
         planMealId,
         mealOwner: planMeal.user_id,
-        requestingUser: TEMP_USER_ID
+        requestingUser: user.id
       })
 
       return new Response(

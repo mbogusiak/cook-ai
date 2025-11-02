@@ -13,7 +13,7 @@ export const prerender = false
  * Returns a list of alternative recipes (max 3 by default) for a specific plan meal.
  * Alternatives must belong to the same slot and meet calorie criteria (±20% of target).
  * 
- * TEMPORARY: No session authentication (will be added in separate step)
+ * Note: user_id is automatically taken from the authenticated session
  * 
  * Query Parameters:
  * - limit (optional): Number of alternatives to return (default 3, max 10)
@@ -142,22 +142,25 @@ export const GET: APIRoute = async (context) => {
     }
 
     // =========================================================================
-    // STEP 4: Get User Session (Temporary Placeholder)
+    // STEP 4: Check Authentication
     // =========================================================================
 
-    // TODO: Replace with actual session authentication
-    // For now, using a placeholder user ID (hardcoded for local dev)
-    const TEMP_USER_ID = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
+    const user = context.locals.user
+    if (!user || !user.id) {
+      console.warn('[GET /api/plan-meals/{id}/alternatives] User not authenticated', {
+        planMealId
+      })
 
-    // When auth is implemented, use:
-    // const session = context.locals.session
-    // if (!session) {
-    //   return new Response(
-    //     JSON.stringify({ error: 'Unauthorized' }),
-    //     { status: 401, headers: { 'Content-Type': 'application/json' } }
-    //   )
-    // }
-    // const userId = session.user.id
+      return new Response(
+        JSON.stringify({
+          error: 'Authentication required'
+        }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
 
     // =========================================================================
     // STEP 5: Fetch Alternative Recipes
@@ -166,12 +169,12 @@ export const GET: APIRoute = async (context) => {
     console.info('[GET /api/plan-meals/{id}/alternatives] Fetching alternatives', {
       planMealId,
       limit,
-      userId: TEMP_USER_ID
+      userId: user.id
     })
 
     const alternatives = await getAlternativesForMeal(
       planMealId,
-      TEMP_USER_ID,
+      user.id,
       supabase,
       limit
     )

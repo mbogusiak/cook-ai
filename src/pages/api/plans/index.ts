@@ -16,11 +16,11 @@ export const prerender = false
  * 
  * Responses:
  * - 200: Success with PlansListResponse
+ * - 401: Unauthorized (user not authenticated)
  * - 400: Bad Request (validation error)
  * - 500: Internal Server Error
  * 
- * Note: Currently uses hardcoded user_id for development. 
- *       Authentication will be added later.
+ * Note: user_id is automatically taken from the authenticated session
  */
 export const GET: APIRoute = async (context) => {
   try {
@@ -49,17 +49,27 @@ export const GET: APIRoute = async (context) => {
 
     const filters = validationResult.data
 
-    // 3. Get Supabase client
+    // 3. Check authentication
+    const user = context.locals.user
+    if (!user || !user.id) {
+      console.warn('[GET /api/plans] User not authenticated')
+
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
+    // 4. Get Supabase client
     const supabase = context.locals.supabase
 
-    // TODO: Replace with proper authentication
-    // For now, using hardcoded user_id for development
-    const userId = '1e486c09-70e2-4acc-913d-7b500bbde2ca'
+    // 5. Call service to get plans using authenticated user_id
+    const result = await getPlans(supabase, user.id, filters)
 
-    // 4. Call service to get plans
-    const result = await getPlans(supabase, userId, filters)
-
-    // 5. Return success response
+    // 6. Return success response
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

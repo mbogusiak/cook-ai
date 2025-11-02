@@ -35,7 +35,7 @@ export default function PlansToolbar({ state, total, onStateChange }: Props): JS
           ))}
         </select>
         <Badge variant="secondary" className="ml-2">
-          {total} plan{total !== 1 ? "ów" : ""}
+          {total} {total === 1 ? "plan" : total >= 2 && total <= 4 ? "plany" : "planów"}
         </Badge>
       </div>
     </div>
