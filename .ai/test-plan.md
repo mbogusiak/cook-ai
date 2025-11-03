@@ -47,7 +47,6 @@ Testy obejmą następujące obszary:
 
 ### 2.2. Poza Zakresem (Out of Scope)
 
-* **Testy Systemu Uwierzytelniania:** Kod jawnie wskazuje na brak zaimplementowanego uwierzytelniania (użycie `TEMP_USER_ID` i `DEV_USER_ID`). Testy będą symulować uwierzytelnionego użytkownika, ale nie będą testować procesów logowania, rejestracji czy resetowania hasła.
 * **Testy Wydajnościowe i Obciążeniowe:** Ten plan skupia się na testach funkcjonalnych. Testy obciążeniowe (np. API `POST /api/plans/generate`) powinny być częścią osobnego planu.
 * **Testy Infrastruktury Supabase:** Nie będziemy testować samej bazy danych Supabase, a jedynie poprawność naszej integracji z nią.
 * **Testy Statycznych Stron Informacyjnych:** Komponenty takie jak `Welcome.astro` (jeśli nie są częścią aktywnego przepływu) mają niski priorytet.
