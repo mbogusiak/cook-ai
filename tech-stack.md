@@ -138,3 +138,4 @@ Testy powinny obejmować weryfikację kodów odpowiedzi HTTP (2xx, 4xx, 5xx), st
 Ten plan stanowi solidną podstawę do rozpoczęcia procesu zapewnienia jakości w projekcie Cookido AI. Powinien być on dokumentem żywym i aktualizowanym wraz z rozwojem aplikacji.
 
 
+
