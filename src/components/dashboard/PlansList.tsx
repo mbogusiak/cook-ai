@@ -65,7 +65,7 @@ export default function PlansList(): JSX.Element {
   const vm = state.data!;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6" data-testid="plans-list">
       <aside className="hidden md:block">
         <LeftSidebar hasActivePlan={vm.hasActivePlan} />
       </aside>

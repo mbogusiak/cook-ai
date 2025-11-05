@@ -33,6 +33,7 @@ export function DayCard({ day, planId }: DayCardProps) {
     <Card 
       id={`day-${day.date}`} 
       className="overflow-hidden transition-shadow duration-200 hover:shadow-lg scroll-mt-6"
+      data-testid={`day-card-${day.date}`}
     >
       <CardHeader>
         <CardTitle className="flex justify-between items-center gap-2">

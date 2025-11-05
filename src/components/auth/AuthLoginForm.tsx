@@ -128,7 +128,7 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
   const submitting = isSubmitting || externalIsSubmitting
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate data-testid="login-form">
       {/* Email Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
@@ -151,6 +151,7 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
             aria-describedby={errors.email ? "email_error" : "email_help"}
             placeholder="twoj@email.pl"
             disabled={submitting}
+            data-testid="login-email"
           />
           {errors.email ? (
             <p id="email_error" className="text-sm text-destructive mt-1">
@@ -185,6 +186,7 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
             aria-describedby={errors.password ? "password_error" : "password_help"}
             placeholder="••••••••"
             disabled={submitting}
+            data-testid="login-password"
           />
           {errors.password ? (
             <p id="password_error" className="text-sm text-destructive mt-1">
@@ -200,7 +202,7 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center">
+        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="login-error">
           {formError}
         </div>
       )}
@@ -210,6 +212,7 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
         type="submit"
         disabled={submitting}
         className="w-full h-12 text-base"
+        data-testid="login-submit"
       >
         {submitting ? "Logowanie..." : "Zaloguj się"}
       </Button>

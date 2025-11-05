@@ -122,7 +122,7 @@ export function PlanOverviewContent({ planId }: PlanOverviewContentProps) {
   
   // Main content
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8 animate-in fade-in duration-500">
+    <div className="container mx-auto px-4 py-6 sm:py-8 animate-in fade-in duration-500" data-testid="plan-overview">
       <PlanHeader 
         plan={plan}
         onArchive={handleArchive}

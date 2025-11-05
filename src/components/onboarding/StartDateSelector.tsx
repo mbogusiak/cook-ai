@@ -70,6 +70,7 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
                 checked={mode === "today"}
                 onChange={(e) => setMode(e.target.value as "today")}
                 className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
+                data-testid="start-date-today"
               />
               <span className="ml-3 text-base">Dzisiaj</span>
             </div>
@@ -91,6 +92,7 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
                 checked={mode === "tomorrow"}
                 onChange={(e) => setMode(e.target.value as "tomorrow")}
                 className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
+                data-testid="start-date-tomorrow"
               />
               <span className="ml-3 text-base">Jutro</span>
             </div>
@@ -112,6 +114,7 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
                 checked={mode === "next_monday"}
                 onChange={(e) => setMode(e.target.value as "next_monday")}
                 className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
+                data-testid="start-date-next-monday"
               />
               <span className="ml-3 text-base">
                 Najbliższy poniedziałek <span className="text-muted-foreground">(zalecane)</span>

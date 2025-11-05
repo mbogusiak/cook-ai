@@ -126,7 +126,7 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
   const submitting = isSubmitting || externalIsSubmitting
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate data-testid="register-form">
       {/* Email Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
@@ -149,6 +149,7 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
             aria-describedby={errors.email ? "email_error" : "email_help"}
             placeholder="twoj@email.pl"
             disabled={submitting || registrationSuccess}
+            data-testid="register-email"
           />
           {errors.email ? (
             <p id="email_error" className="text-sm text-destructive mt-1">
@@ -183,6 +184,7 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
             aria-describedby={errors.password ? "password_error" : "password_help"}
             placeholder="••••••••"
             disabled={submitting || registrationSuccess}
+            data-testid="register-password"
           />
           {errors.password ? (
             <p id="password_error" className="text-sm text-destructive mt-1">
@@ -217,6 +219,7 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
             aria-describedby={errors.confirmPassword ? "confirmPassword_error" : "confirmPassword_help"}
             placeholder="••••••••"
             disabled={submitting || registrationSuccess}
+            data-testid="register-password-confirm"
           />
           {errors.confirmPassword ? (
             <p id="confirmPassword_error" className="text-sm text-destructive mt-1">
@@ -232,7 +235,7 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center">
+        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="register-error">
           {formError}
         </div>
       )}
@@ -275,6 +278,7 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
         type="submit"
         disabled={submitting || registrationSuccess}
         className="w-full h-12 text-base"
+        data-testid="register-submit"
       >
         {submitting ? "Rejestrowanie..." : registrationSuccess ? "Zarejestrowano" : "Zarejestruj się"}
       </Button>

@@ -23,7 +23,7 @@ type Props = {
 
 export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting }: Props): React.ReactElement {
   return (
-    <form className="space-y-6">
+    <form className="space-y-6" data-testid="plan-form">
       {/* Calories Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
@@ -48,6 +48,7 @@ export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting 
             aria-describedby={errors.daily_calories ? "daily_calories_error" : "daily_calories_help"}
             placeholder="np. 2000"
             disabled={isSubmitting}
+            data-testid="plan-calories-input"
           />
           {errors.daily_calories ? (
             <p id="daily_calories_error" className="text-sm text-destructive mt-1">
@@ -85,6 +86,7 @@ export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting 
             aria-describedby={errors.plan_length_days ? "plan_length_days_error" : "plan_length_days_help"}
             placeholder="np. 7"
             disabled={isSubmitting}
+            data-testid="plan-length-select"
           />
           {errors.plan_length_days ? (
             <p id="plan_length_days_error" className="text-sm text-destructive mt-1">

@@ -24,14 +24,15 @@ const AlternativesList: React.FC<{
   selected: number | null;
   onSelect: (id: number) => void;
 }> = ({ alternatives, selected, onSelect }) => (
-  <div className="space-y-3">
-    {alternatives.map(alt => (
+  <div className="space-y-3" data-testid="swap-options">
+    {alternatives.map((alt, index) => (
       <div
         key={alt.id}
         className={`flex gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
           selected === alt.id ? 'border-info bg-info/10' : 'hover:bg-muted/30'
         }`}
         onClick={() => onSelect(alt.id)}
+        data-testid={`swap-option-${index + 1}`}
       >
         <img
           src={alt.image_url || '/placeholder.svg'}
@@ -67,7 +68,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ meal, isOpen, onClose }) =
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent data-testid="swap-modal">
         <DialogHeader>
           <DialogTitle>Wymień posiłek: {meal.name}</DialogTitle>
           <DialogDescription>
@@ -91,8 +92,8 @@ export const SwapModal: React.FC<SwapModalProps> = ({ meal, isOpen, onClose }) =
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSwapping}>Anuluj</Button>
-          <Button onClick={handleSwap} disabled={!selectedAlternative || isSwapping}>
+          <Button variant="outline" onClick={onClose} disabled={isSwapping} data-testid="swap-cancel">Anuluj</Button>
+          <Button onClick={handleSwap} disabled={!selectedAlternative || isSwapping} data-testid="swap-confirm">
             {isSwapping ? 'Wymienianie...' : 'Wymień'}
           </Button>
         </DialogFooter>

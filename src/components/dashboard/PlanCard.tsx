@@ -28,7 +28,7 @@ export default function PlanCard({ plan }: Props): JSX.Element {
   const stateColor = getStateColor(plan.state);
 
   return (
-    <a href={`/plans/${plan.id}`} aria-label={`Otwórz plan ${plan.id}`}>
+    <a href={`/plans/${plan.id}`} aria-label={`Otwórz plan ${plan.id}`} data-testid="plan-card">
       <Card className="hover:bg-accent transition-colors">
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle>Plan #{plan.id}</CardTitle>

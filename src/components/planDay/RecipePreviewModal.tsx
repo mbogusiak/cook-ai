@@ -19,7 +19,7 @@ export const RecipePreviewModal: React.FC<RecipePreviewModalProps> = ({ meal, is
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="recipe-modal">
         <DialogHeader>
           <DialogTitle className="text-2xl">{meal.name}</DialogTitle>
         </DialogHeader>
@@ -82,6 +82,7 @@ export const RecipePreviewModal: React.FC<RecipePreviewModalProps> = ({ meal, is
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
+              data-testid="meal-recipe-link"
             >
               Zobacz oryginał w Cookido →
             </a>

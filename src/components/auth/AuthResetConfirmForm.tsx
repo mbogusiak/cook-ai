@@ -103,7 +103,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate data-testid="reset-confirm-form">
       {/* Password Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
@@ -125,6 +125,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
             aria-describedby={errors.password ? "password_error" : "password_help"}
             placeholder="••••••••"
             disabled={isSubmitting}
+            data-testid="reset-new-password"
           />
           {errors.password ? (
             <p id="password_error" className="text-sm text-destructive mt-1">
@@ -159,6 +160,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
             aria-describedby={errors.confirmPassword ? "confirmPassword_error" : "confirmPassword_help"}
             placeholder="••••••••"
             disabled={isSubmitting}
+            data-testid="reset-new-password-confirm"
           />
           {errors.confirmPassword ? (
             <p id="confirmPassword_error" className="text-sm text-destructive mt-1">
@@ -174,7 +176,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center">
+        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="reset-confirm-error">
           {formError}
         </div>
       )}
@@ -184,6 +186,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
         type="submit"
         disabled={isSubmitting}
         className="w-full h-12 text-base"
+        data-testid="reset-confirm-submit"
       >
         {isSubmitting ? "Resetowanie..." : "Ustaw nowe hasło"}
       </Button>

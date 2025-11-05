@@ -25,6 +25,7 @@ export function PlanCalendarStrip({ days, activeDate }: PlanCalendarStripProps) 
     <nav
       className="mb-6 -mx-4 px-4 sm:mx-0 sm:px-0"
       aria-label="Nawigacja po dniach planu"
+      data-testid="calendar-strip"
     >
       <div className="overflow-x-auto scrollbar-hide scroll-smooth -mx-4 px-4">
         <div className="flex gap-2 py-2 snap-x snap-mandatory min-w-min">

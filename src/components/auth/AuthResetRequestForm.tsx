@@ -60,7 +60,7 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
 
   if (success) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-testid="reset-request-success">
         <div className="text-center">
           <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
             <Mail className="w-8 h-8 text-success" />
@@ -82,7 +82,7 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate data-testid="reset-request-form">
       {/* Email Field */}
       <div className="flex gap-4">
         <div className="flex-shrink-0 pt-1">
@@ -105,6 +105,7 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
             aria-describedby={errors.email ? "email_error" : "email_help"}
             placeholder="twoj@email.pl"
             disabled={isSubmitting}
+            data-testid="reset-request-email"
           />
           {errors.email ? (
             <p id="email_error" className="text-sm text-destructive mt-1">
@@ -120,7 +121,7 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center">
+        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="reset-request-error">
           {formError}
         </div>
       )}
@@ -130,6 +131,7 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
         type="submit"
         disabled={isSubmitting}
         className="w-full h-12 text-base"
+        data-testid="reset-request-submit"
       >
         {isSubmitting ? "Wysyłanie..." : "Wyślij link resetu"}
       </Button>

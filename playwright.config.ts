@@ -1,18 +1,25 @@
 import { defineConfig, devices } from "@playwright/test"
 import dotenv from "dotenv";
 import path from "node:path";
-dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+dotenv.config({
+  path: path.resolve(process.cwd(), ".env.test"),
+  override: true
+});
 
 export default defineConfig({
   testDir: "e2e",
   timeout: 30_000,
   retries: 1,
   reporter: [["list"]],
+  globalSetup: "./e2e/global-setup.ts",
+  globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
+    locale: "pl-PL",
+    timezoneId: "Europe/Warsaw",
   },
   projects: [
     {
@@ -26,8 +33,4 @@ export default defineConfig({
     reuseExistingServer: true,
     timeout: 120_000,
   },
-})
-
-
-
-
+});

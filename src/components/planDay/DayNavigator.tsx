@@ -42,6 +42,7 @@ export const DayNavigator: React.FC<DayNavigatorProps> = ({
         onClick={() => handleNavigate(prevDayString)}
         disabled={isFirstDay}
         aria-label="Poprzedni dzień"
+        data-testid="day-prev"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -55,6 +56,7 @@ export const DayNavigator: React.FC<DayNavigatorProps> = ({
         onClick={() => handleNavigate(nextDayString)}
         disabled={isLastDay}
         aria-label="Następny dzień"
+        data-testid="day-next"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

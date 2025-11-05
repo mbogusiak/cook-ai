@@ -24,19 +24,22 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
   };
 
   return (
-    <div className={cn(
+    <div
+      className={cn(
       "border rounded-lg overflow-hidden transition-all flex flex-col h-full",
       meal.status === 'completed' && "border-success bg-success/10",
       meal.status === 'skipped' && "border-destructive bg-destructive/10 opacity-60",
       isPending && "opacity-50 cursor-not-allowed"
-    )}>
+    )}
+      data-testid={`meal-card-${meal.slot}`}
+    >
       <div className="relative flex-shrink-0">
         <img src={meal.imageUrl || '/placeholder.svg'} alt={meal.name} className="w-full h-32 object-cover" />
         <div className="absolute top-2 right-2 flex gap-2 bg-white/70 backdrop-blur-sm rounded-full p-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange('completed')} disabled={isPending}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange('completed')} disabled={isPending} data-testid="meal-complete">
             {meal.status === 'completed' ? <CheckCircle2 className="text-success" /> : <CheckCircle2 />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange('skipped')} disabled={isPending}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange('skipped')} disabled={isPending} data-testid="meal-skip">
             {meal.status === 'skipped' ? <XCircle className="text-destructive" /> : <XCircle />}
           </Button>
         </div>
@@ -44,13 +47,20 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
       <div className="p-4 flex flex-col flex-1 overflow-hidden">
         <h4 className="font-bold truncate">{meal.name}</h4>
         <div className="flex justify-between items-center text-sm text-gray-500 mt-1">
-          <span>{meal.caloriesPlanned} kcal</span>
+          <span data-testid="meal-calories">{meal.caloriesPlanned} kcal</span>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
             <span>{meal.timeMinutes} min</span>
           </div>
         </div>
-        {meal.multiPortionText && <p className="text-sm text-info mt-2">{meal.multiPortionText}</p>}
+        {meal.multiPortionText && (
+          <p
+            className="text-sm text-info mt-2"
+            data-testid={meal.isMultiPortionCookDay ? 'multiportion-badge' : meal.isMultiPortionLeftoverDay ? 'leftovers-badge' : undefined}
+          >
+            {meal.multiPortionText}
+          </p>
+        )}
 
         {/* Ingredients section - scrollable */}
         {meal.ingredients.length > 0 && (
@@ -89,11 +99,13 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
             className="flex-1 bg-warning hover:bg-warning/80 text-warning-foreground"
             disabled={isPending || meal.status !== 'planned'}
             onClick={() => onSwap(meal)}
+            data-testid="meal-swap"
           >
             <ArrowRightLeft className="h-4 w-4" />
             Wymień
           </Button>
         </div>
+        <span className="sr-only" data-testid="meal-status">{meal.status}</span>
       </div>
     </div>
   );

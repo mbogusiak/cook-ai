@@ -135,6 +135,7 @@ export default function OnboardingPage({ initialUser }: OnboardingPageProps): Re
           onClick={step === 1 ? goNext : handleGenerate}
           disabled={isSubmitting}
           className={`${step === 2 ? "flex-1" : "w-full"} h-12 text-base`}
+          data-testid={step === 1 ? "plan-next-step" : "generate-plan"}
         >
           {step === 1 ? "Dalej" : "Generuj plan"}
         </Button>
