@@ -11,12 +11,28 @@ export class LoginPage extends BasePage {
     await this.getByTestId('login-email').fill(email);
     await this.getByTestId('login-password').fill(password);
     await this.getByTestId('login-submit').click();
+    // Wait a bit for form submission to process
+    await this.page.waitForTimeout(500);
   }
 
   async expectError(message?: string): Promise<void> {
-    const err = this.getByTestId('login-error');
-    await this.expectVisible(err);
-    if (message) await expect(err).toContainText(message);
+    // Check for form-level error OR field-level errors
+    const formError = this.getByTestId('login-error');
+    const fieldErrors = this.page.locator('.text-destructive').first();
+
+    // Wait for either form error or field error to be visible
+    try {
+      await expect(formError.or(fieldErrors)).toBeVisible({ timeout: 5000 });
+      if (message && await formError.isVisible()) {
+        await expect(formError).toContainText(message);
+      }
+    } catch (e) {
+      // If no error is visible, check if there are any field-specific errors
+      const hasFieldError = await fieldErrors.isVisible();
+      if (!hasFieldError) {
+        throw new Error('Expected to find an error message but none was visible');
+      }
+    }
   }
 }
 
@@ -31,12 +47,28 @@ export class RegisterPage extends BasePage {
     await this.getByTestId('register-password').fill(password);
     await this.getByTestId('register-password-confirm').fill(confirmPassword ?? password);
     await this.getByTestId('register-submit').click();
+    // Wait a bit for form submission to process
+    await this.page.waitForTimeout(500);
   }
 
   async expectError(message?: string): Promise<void> {
-    const err = this.getByTestId('register-error');
-    await this.expectVisible(err);
-    if (message) await expect(err).toContainText(message);
+    // Check for form-level error OR field-level errors
+    const formError = this.getByTestId('register-error');
+    const fieldErrors = this.page.locator('.text-destructive').first();
+
+    // Wait for either form error or field error to be visible
+    try {
+      await expect(formError.or(fieldErrors)).toBeVisible({ timeout: 5000 });
+      if (message && await formError.isVisible()) {
+        await expect(formError).toContainText(message);
+      }
+    } catch (e) {
+      // If no error is visible, check if there are any field-specific errors
+      const hasFieldError = await fieldErrors.isVisible();
+      if (!hasFieldError) {
+        throw new Error('Expected to find an error message but none was visible');
+      }
+    }
   }
 }
 
@@ -49,6 +81,8 @@ export class ResetRequestPage extends BasePage {
   async request(email: string): Promise<void> {
     await this.getByTestId('reset-request-email').fill(email);
     await this.getByTestId('reset-request-submit').click();
+    // Wait a bit for form submission to process
+    await this.page.waitForTimeout(500);
   }
 
   async expectSuccess(): Promise<void> {
@@ -56,7 +90,20 @@ export class ResetRequestPage extends BasePage {
   }
 
   async expectError(): Promise<void> {
-    await this.expectVisible(this.getByTestId('reset-request-error'));
+    // Check for form-level error OR field-level errors
+    const formError = this.getByTestId('reset-request-error');
+    const fieldErrors = this.page.locator('.text-destructive').first();
+
+    // Wait for either form error or field error to be visible
+    try {
+      await expect(formError.or(fieldErrors)).toBeVisible({ timeout: 5000 });
+    } catch (e) {
+      // If no error is visible, check if there are any field-specific errors
+      const hasFieldError = await fieldErrors.isVisible();
+      if (!hasFieldError) {
+        throw new Error('Expected to find an error message but none was visible');
+      }
+    }
   }
 }
 

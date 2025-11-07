@@ -79,33 +79,68 @@ export async function cleanupTestData(
 
   const planIds = plans.map((p) => p.id);
 
-  // Try to delete via CASCADE from plans
-  // Note: This may fail due to multi-portion group trigger on DELETE
+  // Get all plan_day IDs for these plans
+  const { data: planDays } = await supabase
+    .from("plan_days")
+    .select("id")
+    .in("plan_id", planIds);
+
+  const planDayIds = planDays?.map((pd) => pd.id) ?? [];
+
+  // Delete in correct order to respect foreign key constraints
+  // 1. Delete plan_meals first (child table)
+  console.log("  Deleting plan_meals...");
+  const { error: deleteMealsError } = await supabase
+    .from("plan_meals")
+    .delete()
+    .eq("user_id", testUser.id);
+
+  if (deleteMealsError) {
+    console.error("Failed to delete plan_meals:", deleteMealsError.message);
+    throw deleteMealsError;
+  }
+  console.log("  ✓ Deleted plan_meals");
+
+  // 2. Delete slot targets
+  if (planDayIds.length > 0) {
+    console.log("  Deleting slot targets...");
+    const { error: deleteTargetsError } = await supabase
+      .from("plan_day_slot_targets")
+      .delete()
+      .in("plan_day_id", planDayIds);
+
+    if (deleteTargetsError) {
+      console.error("Failed to delete slot targets:", deleteTargetsError.message);
+      throw deleteTargetsError;
+    }
+    console.log("  ✓ Deleted slot targets");
+  }
+
+  // 3. Delete plan_days
+  console.log("  Deleting plan_days...");
+  const { error: deleteDaysError } = await supabase
+    .from("plan_days")
+    .delete()
+    .in("plan_id", planIds);
+
+  if (deleteDaysError) {
+    console.error("Failed to delete plan_days:", deleteDaysError.message);
+    throw deleteDaysError;
+  }
+  console.log("  ✓ Deleted plan_days");
+
+  // 4. Delete plans
+  console.log("  Deleting plans...");
   const { error: deletePlansError } = await supabase
     .from("plans")
     .delete()
     .in("id", planIds);
 
-  // If deletion fails due to multi-portion trigger, provide manual cleanup instructions
   if (deletePlansError) {
-    if (deletePlansError.message.includes("multi-portion group")) {
-      console.log("\n⚠️  Automatic cleanup blocked by multi-portion group trigger");
-      console.log("📝 Please run manual cleanup:");
-      console.log("   1. Open Supabase SQL Editor");
-      console.log("   2. Run the SQL from: e2e/fixtures/cleanup-manual.sql");
-      console.log("   3. Then re-run the seeding script\n");
-      console.log(
-        `   Quick SQL: See e2e/fixtures/cleanup-manual.sql for user ID: ${testUser.id}\n`,
-      );
-
-      // Don't throw - allow seeding to continue if user manually cleaned
-      console.log("⏭️  Attempting to continue (may fail if data still exists)...\n");
-      return;
-    }
-
     console.error("Failed to delete plans:", deletePlansError.message);
     throw deletePlansError;
   }
+  console.log("  ✓ Deleted plans");
 
   // Verify deletion
   const { data: remainingPlans } = await supabase
@@ -438,7 +473,7 @@ export async function seedBaselinePlan(
  * Main seeding function
  * Cleans up existing data and seeds fresh baseline data
  */
-export async function seedE2EData(): Promise<{
+export async function seedE2EData(skipPlan = false): Promise<{
   planId: number;
   supabase: SupabaseClientType;
 }> {
@@ -448,7 +483,13 @@ export async function seedE2EData(): Promise<{
 
   await cleanupTestData(supabase);
   await seedUserSettings(supabase);
-  const planId = await seedBaselinePlan(supabase);
+
+  let planId = 0;
+  if (!skipPlan) {
+    planId = await seedBaselinePlan(supabase);
+  } else {
+    console.log("⏭️  Skipping baseline plan creation\n");
+  }
 
   console.log("\n🎉 E2E data seeding complete!\n");
 

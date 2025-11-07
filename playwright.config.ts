@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test"
 import dotenv from "dotenv";
 import path from "node:path";
 dotenv.config({
-  path: path.resolve(process.cwd(), ".env.test"),
+  path: path.resolve(process.cwd(), ".env.e2e"),
   override: true
 });
 
@@ -28,9 +28,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && npm run preview -- --port=3000",
+    command: "cp .env .env.backup.local && cp .env.e2e .env && npm run build && npm run preview -- --port=3000",
     url: "http://localhost:3000",
-    reuseExistingServer: true,
+    reuseExistingServer: false, // Force rebuild with correct env
     timeout: 120_000,
   },
 });

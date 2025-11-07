@@ -17,9 +17,16 @@ pnpm-debug.log*
 .env
 .env.production
 .env.test
+.env.e2e
+.env.backup.local
 
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
+
+# debug and temporary files
+.ai/e2e-tests-status.md
+src/pages/api/debug/
+e2e/debug-*.spec.ts

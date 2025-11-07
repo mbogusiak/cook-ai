@@ -31,6 +31,25 @@ export class OnboardingPage extends BasePage {
   async generate(): Promise<void> {
     await this.getByTestId('generate-plan').click();
   }
+
+  async expectFormVisible(): Promise<void> {
+    await this.expectVisible(this.getByTestId('plan-form'));
+  }
+
+  async expectStartDateSelectorVisible(): Promise<void> {
+    await this.expectVisible(this.getByTestId('start-date-next-monday'));
+  }
+
+  async expectError(field: 'calories' | 'length'): Promise<void> {
+    const testId = field === 'calories' ? 'plan-calories-input' : 'plan-length-select';
+    const input = this.getByTestId(testId);
+    await expect(input).toHaveAttribute('aria-invalid', 'true');
+  }
+
+  async expectGeneratingLoader(): Promise<void> {
+    // BlockingLoader shows "Generowanie planu..." text
+    await expect(this.page.getByText('Generowanie planu...')).toBeVisible();
+  }
 }
 
 

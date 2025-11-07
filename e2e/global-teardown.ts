@@ -1,5 +1,6 @@
 import * as dotenv from "dotenv";
 import * as path from "node:path";
+import * as fs from "node:fs";
 import { cleanupTestData, createAuthenticatedClient } from "./utils/seed";
 
 /**
@@ -7,7 +8,7 @@ import { cleanupTestData, createAuthenticatedClient } from "./utils/seed";
  * Runs once after all tests complete
  *
  * This script optionally cleans up test data.
- * Set E2E_CLEANUP=true in .env.test to enable cleanup after tests.
+ * Set E2E_CLEANUP=true in .env.e2e to enable cleanup after tests.
  * By default, data is left for debugging purposes.
  */
 async function globalTeardown() {
@@ -15,24 +16,24 @@ async function globalTeardown() {
   console.log("🧹 Playwright Global Teardown");
   console.log("=".repeat(60) + "\n");
 
-  // Ensure .env.test is loaded and overrides any existing env vars
+  // Ensure .env.e2e is loaded and overrides any existing env vars
   dotenv.config({
-    path: path.resolve(process.cwd(), ".env.test"),
+    path: path.resolve(process.cwd(), ".env.e2e"),
     override: true
   });
 
   const shouldCleanup = process.env.E2E_CLEANUP === "true";
 
-  if (!shouldCleanup) {
-    console.log(
-      "ℹ️  Skipping cleanup (E2E_CLEANUP not set to 'true' in .env.test)",
-    );
-    console.log("   Test data will remain in database for debugging");
-    console.log("\n" + "=".repeat(60) + "\n");
-    return;
-  }
-
   try {
+    if (!shouldCleanup) {
+      console.log(
+        "ℹ️  Skipping cleanup (E2E_CLEANUP not set to 'true' in .env.e2e)",
+      );
+      console.log("   Test data will remain in database for debugging");
+      console.log("\n" + "=".repeat(60) + "\n");
+      return;
+    }
+
     console.log("🗑️  Cleaning up test data...\n");
 
     const supabase = await createAuthenticatedClient();
@@ -50,6 +51,17 @@ async function globalTeardown() {
     console.error("=".repeat(60));
     console.error(error);
     // Don't throw - teardown failures shouldn't fail the entire test run
+  } finally {
+    // Always restore the original .env file for local development
+    const backupPath = path.resolve(process.cwd(), ".env.backup.local");
+    const envPath = path.resolve(process.cwd(), ".env");
+
+    if (fs.existsSync(backupPath)) {
+      console.log("🔄 Restoring original .env file for local development...");
+      fs.copyFileSync(backupPath, envPath);
+      fs.unlinkSync(backupPath);
+      console.log("✅ Original .env file restored\n");
+    }
   }
 }
 
