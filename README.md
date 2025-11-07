@@ -4,7 +4,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwindcss&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)
 
-## Table of Contents
+## Table of Contents 
 
 - [1. Project name](#1-project-name)
 - [2. Project description](#2-project-description)
