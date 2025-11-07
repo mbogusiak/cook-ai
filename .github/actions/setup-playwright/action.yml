@@ -1,0 +1,16 @@
+name: Setup Playwright browsers
+description: Install Playwright browsers per project config
+inputs:
+  working-directory:
+    description: Optional working directory
+    required: false
+    default: .
+runs:
+  using: composite
+  steps:
+    - name: Install Playwright browsers (per project script)
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm run e2e:install
+
+
