@@ -10,7 +10,7 @@ interface PlanCalendarStripProps {
   activeDate?: string;
 }
 
-export function PlanCalendarStrip({ days, activeDate }: PlanCalendarStripProps) {
+export function PlanCalendarStrip({ days }: PlanCalendarStripProps) {
   /**
    * Handles date click - scrolls to the corresponding day card
    */

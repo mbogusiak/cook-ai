@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Enums } from "../../db/database.types";
+import type { Database, Enums } from "@/db/database.types.ts";
 import { generatePlan, getPlans, getPlanDetailsWithMeals } from "./plans.service";
 
 type AnySupabase = SupabaseClient<Database> & Record<string, any>;
@@ -92,7 +92,6 @@ function createSupabaseStubForGeneratePlan(options?: {
           data = [];
         } else if (state.selectFields === "*" && state.query.count === "exact") {
           // getPlans listing
-          const total = 3;
           const items = [
             { id: 1, state: "active", created_at: "2025-01-01" },
             { id: 2, state: "archived", created_at: "2024-12-01" },

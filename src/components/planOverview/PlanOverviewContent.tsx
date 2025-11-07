@@ -49,7 +49,7 @@ export function PlanOverviewContent({ planId }: PlanOverviewContentProps) {
 
     if (plan.completionPercentage < 90) {
       // TODO: Add toast notification
-      console.warn("Ukończ co najmniej 90% posiłków aby zarchiwizować plan");
+      // console.warn("Ukończ co najmniej 90% posiłków aby zarchiwizować plan");
       return;
     }
 

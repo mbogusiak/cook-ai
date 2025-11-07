@@ -44,6 +44,7 @@ export const POST: APIRoute = async (context) => {
       }
       requestBody = JSON.parse(bodyText);
     } catch (error) {
+      console.error(error);
       return new Response(JSON.stringify({ error: "Invalid JSON in request body" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },

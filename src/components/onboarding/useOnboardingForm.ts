@@ -142,7 +142,8 @@ export function useOnboardingForm(options?: UseOnboardingFormOptions) {
 
       setServerMessage("Sukces! Przekierowanie...");
       return planId;
-    } catch (_e) {
+    } catch (e) {
+      console.error(e);
       setServerMessage("Wystąpił błąd sieci. Spróbuj ponownie.");
       return null;
     } finally {

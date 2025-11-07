@@ -15,17 +15,12 @@ if (user) {
   // Check if user has active plan
   const supabase = Astro.locals.supabase;
   try {
-    const { data: activePlan, error } = await supabase
+    const { data: activePlan } = await supabase
       .from("plans")
       .select("id")
       .eq("user_id", user.id)
       .eq("state", "active")
       .single();
-
-    if (error && error.code !== "PGRST116") {
-      // PGRST116 = no rows found, which is expected
-      console.error("Error checking active plan:", error);
-    }
 
     // Redirect based on active plan status
     if (activePlan && activePlan.id) {
@@ -34,7 +29,7 @@ if (user) {
       return Astro.redirect("/onboarding");
     }
   } catch (err) {
-    console.error("Error in login redirect:", err);
+    console.error(err);
     // Default to onboarding on error
     return Astro.redirect("/onboarding");
   }

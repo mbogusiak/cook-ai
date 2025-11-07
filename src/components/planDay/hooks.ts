@@ -95,7 +95,7 @@ export const useUpdateMealStatus = () => {
       const result = await response.json();
       return result.data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planDay"] });
     },
   });

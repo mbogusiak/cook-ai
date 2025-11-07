@@ -55,72 +55,65 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
 
         <div className="space-y-3">
           {/* Today */}
-          <label className="block cursor-pointer">
-            <div
-              className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
-                mode === "today" ? "bg-orange-50 border-orange-500" : "bg-white border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <input
-                type="radio"
-                name="start_date_mode"
-                value="today"
-                checked={mode === "today"}
-                onChange={(e) => setMode(e.target.value as "today")}
-                className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
-                data-testid="start-date-today"
-              />
-              <span className="ml-3 text-base">Dzisiaj</span>
-            </div>
-          </label>
+          <div
+            className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
+              mode === "today" ? "bg-orange-50 border-orange-500" : "bg-white border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <input
+              type="radio"
+              name="start_date_mode"
+              value="today"
+              checked={mode === "today"}
+              onChange={(e) => setMode(e.target.value as "today")}
+              className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
+              data-testid="start-date-today"
+            />
+            <span className="ml-3 text-base">Dzisiaj</span>
+          </div>
 
           {/* Tomorrow */}
-          <label className="block cursor-pointer">
-            <div
-              className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
-                mode === "tomorrow"
-                  ? "bg-orange-50 border-orange-500"
-                  : "bg-white border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <input
-                type="radio"
-                name="start_date_mode"
-                value="tomorrow"
-                checked={mode === "tomorrow"}
-                onChange={(e) => setMode(e.target.value as "tomorrow")}
-                className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
-                data-testid="start-date-tomorrow"
-              />
-              <span className="ml-3 text-base">Jutro</span>
-            </div>
-          </label>
+          <div
+            className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
+              mode === "tomorrow" ? "bg-orange-50 border-orange-500" : "bg-white border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <input
+              type="radio"
+              name="start_date_mode"
+              value="tomorrow"
+              checked={mode === "tomorrow"}
+              onChange={(e) => setMode(e.target.value as "tomorrow")}
+              className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
+              data-testid="start-date-tomorrow"
+            />
+            <span className="ml-3 text-base">Jutro</span>
+          </div>
 
           {/* Next Monday */}
-          <label className="block cursor-pointer">
-            <div
-              className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
-                mode === "next_monday"
-                  ? "bg-orange-50 border-orange-500"
-                  : "bg-white border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <input
-                type="radio"
-                name="start_date_mode"
-                value="next_monday"
-                checked={mode === "next_monday"}
-                onChange={(e) => setMode(e.target.value as "next_monday")}
-                className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
-                data-testid="start-date-next-monday"
-              />
-              <span className="ml-3 text-base">
-                Najbliższy poniedziałek <span className="text-muted-foreground">(zalecane)</span>
-              </span>
-            </div>
-          </label>
+          <div
+            className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
+              mode === "next_monday"
+                ? "bg-orange-50 border-orange-500"
+                : "bg-white border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <input
+              type="radio"
+              name="start_date_mode"
+              value="next_monday"
+              checked={mode === "next_monday"}
+              onChange={(e) => setMode(e.target.value as "next_monday")}
+              className="w-5 h-5 accent-orange-500 appearance-none border-2 border-gray-300 rounded-full checked:border-orange-500 checked:bg-orange-500 cursor-pointer"
+              data-testid="start-date-next-monday"
+            />
+            <span className="ml-3 text-base">
+              Najbliższy poniedziałek <span className="text-muted-foreground">(zalecane)</span>{" "}
+            </span>
+          </div>
 
           {/* Custom Date */}
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="block cursor-pointer">
             <div
               className={`flex items-center px-4 py-3 rounded-xl border transition-all ${

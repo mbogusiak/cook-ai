@@ -26,6 +26,7 @@ const AlternativesList: React.FC<{
 }> = ({ alternatives, selected, onSelect }) => (
   <div className="space-y-3" data-testid="swap-options">
     {alternatives.map((alt, index) => (
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
       <div
         key={alt.id}
         className={`flex gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
