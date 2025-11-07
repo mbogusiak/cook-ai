@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { planIdParamSchema } from "../../../lib/schemas/planParams";
 import { getPlanById, updatePlanState } from "../../../lib/services/plans.service";
-import { NotFoundError, ForbiddenError, ServerError } from "../../../lib/errors";
+import { NotFoundError, ForbiddenError, _ServerError } from "../../../lib/errors";
 
 export const prerender = false;
 

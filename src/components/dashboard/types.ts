@@ -1,4 +1,4 @@
-import type { PlanDTO, PlansListResponse, PaginationMeta } from "@/types";
+import type { PlanDTO, PlansListResponse } from "@/types";
 
 export type PlanStateFilter = "all" | "active" | "archived" | "cancelled";
 

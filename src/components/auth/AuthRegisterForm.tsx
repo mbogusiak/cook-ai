@@ -76,7 +76,7 @@ export function AuthRegisterForm({
     // If custom onSubmit is provided, use it
     if (onSubmit) {
       try {
-        const { confirmPassword, ...submitData } = result.data;
+        const { confirmPassword: _confirmPassword, ...submitData } = result.data;
         await onSubmit(submitData);
       } catch (err) {
         setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas rejestracji");
@@ -87,7 +87,7 @@ export function AuthRegisterForm({
     // Default: call API endpoint
     setIsSubmitting(true);
     try {
-      const { confirmPassword, ...submitData } = result.data;
+      const { confirmPassword: _confirmPassword, ...submitData } = result.data;
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {

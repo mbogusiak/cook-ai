@@ -94,7 +94,7 @@ export const POST: APIRoute = async (context) => {
         );
       }
       requestBody = JSON.parse(bodyText);
-    } catch (e) {
+    } catch (_e) {
       return new Response(
         JSON.stringify({
           error: {

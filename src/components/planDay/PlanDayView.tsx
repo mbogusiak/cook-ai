@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { format } from "date-fns";
-import { pl } from "date-fns/locale";
 import { usePlanDayQuery } from "./hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";

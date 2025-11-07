@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { createPlanCommandSchema } from "../../../lib/schemas/plan";
 import { generatePlan } from "../../../lib/services/plans.service";
-import { ConflictError, ServerError } from "../../../lib/errors";
+import { ConflictError, _ServerError } from "../../../lib/errors";
 import type { PlanDTO } from "../../../types";
 
 export const prerender = false;

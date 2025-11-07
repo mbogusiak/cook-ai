@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 import { planMealIdSchema } from "@/lib/schemas/planMeal";
 import { updateMealStatus } from "@/lib/services/planMeals.service";
-import { NotFoundError, ForbiddenError, ServerError, ValidationError } from "@/lib/errors";
+import { NotFoundError, ForbiddenError, _ServerError, _ValidationError } from "@/lib/errors";
 import type { UpdateMealResponse } from "@/types";
 
 export const prerender = false;
