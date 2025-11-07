@@ -3,7 +3,7 @@ name: pull-request
 on:
   pull_request:
     branches:
-      - master2qw
+      - master
 
 concurrency:
   group: pr-${{ github.event.pull_request.number || github.ref }}
