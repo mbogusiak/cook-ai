@@ -28,7 +28,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "test -f .env && cp .env .env.backup.local || true && cp .env.e2e .env && npm run build && npm run preview -- --port=3000",
+    command:
+      "test -f .env && cp .env .env.backup.local || true && cp .env.e2e .env && npm run build && npm run preview -- --port=3000",
     url: "http://localhost:3000",
     reuseExistingServer: false, // Force rebuild with correct env
     timeout: 120_000,
