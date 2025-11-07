@@ -2,12 +2,12 @@
  * Horizontal calendar strip with all plan days
  */
 
-import { DateBadge } from './DateBadge'
-import type { DayViewModel } from './types'
+import { DateBadge } from "./DateBadge";
+import type { DayViewModel } from "./types";
 
 interface PlanCalendarStripProps {
-  days: DayViewModel[]
-  activeDate?: string
+  days: DayViewModel[];
+  activeDate?: string;
 }
 
 export function PlanCalendarStrip({ days, activeDate }: PlanCalendarStripProps) {
@@ -15,11 +15,11 @@ export function PlanCalendarStrip({ days, activeDate }: PlanCalendarStripProps) 
    * Handles date click - scrolls to the corresponding day card
    */
   const handleDateClick = (date: string) => {
-    const element = document.getElementById(`day-${date}`)
+    const element = document.getElementById(`day-${date}`);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }
+  };
 
   return (
     <nav
@@ -34,13 +34,12 @@ export function PlanCalendarStrip({ days, activeDate }: PlanCalendarStripProps) 
               key={day.id}
               date={day.date}
               dayOfWeek={day.dayOfWeek}
-              isCompleted={day.completionStatus === 'all-completed'}
+              isCompleted={day.completionStatus === "all-completed"}
               onClick={() => handleDateClick(day.date)}
             />
           ))}
         </div>
       </div>
     </nav>
-  )
+  );
 }
-

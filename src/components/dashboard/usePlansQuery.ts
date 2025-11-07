@@ -18,7 +18,7 @@ function formatDateLabel(iso: string): string {
   }
 }
 
-function toPaginationState(meta: { total: number; limit: number; offset: number; has_more: boolean; }): PaginationState {
+function toPaginationState(meta: { total: number; limit: number; offset: number; has_more: boolean }): PaginationState {
   const currentPage = Math.floor(meta.offset / meta.limit) + 1;
   const totalPages = Math.max(1, Math.ceil(meta.total / meta.limit));
   return {
@@ -76,7 +76,8 @@ export function usePlansQuery() {
           isActive: dto.state === "active",
         }));
         // Check for active plan across ALL user's plans, not just filtered ones
-        const hasActivePlan: ActivePlanPresence = json.has_active_plan ?? json.data.some((d: any) => d.state === "active");
+        const hasActivePlan: ActivePlanPresence =
+          json.has_active_plan ?? json.data.some((d: any) => d.state === "active");
         const pagination = toPaginationState(json.pagination);
         setState({
           status: "success",
@@ -88,7 +89,9 @@ export function usePlansQuery() {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [params.state, params.limit, params.offset]);
 
   // sync to URL without full reload (client-only)
@@ -96,7 +99,8 @@ export function usePlansQuery() {
     if (typeof window === "undefined") return;
     const page = Math.floor(params.offset / params.limit) + 1;
     const url = new URL(window.location.href);
-    if (params.state) url.searchParams.set("state", params.state); else url.searchParams.delete("state");
+    if (params.state) url.searchParams.set("state", params.state);
+    else url.searchParams.delete("state");
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(params.limit));
     window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
@@ -104,5 +108,3 @@ export function usePlansQuery() {
 
   return { state, params, setParams } as const;
 }
-
-

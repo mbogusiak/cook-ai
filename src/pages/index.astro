@@ -7,32 +7,32 @@ const supabase = Astro.locals.supabase;
 if (user && user.id) {
   try {
     const { data: activePlan, error } = await supabase
-      .from('plans')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('state', 'active')
+      .from("plans")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("state", "active")
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error.code !== "PGRST116") {
       // PGRST116 = no rows found, which is expected
-      console.error('Error checking active plan:', error);
+      console.error("Error checking active plan:", error);
     }
 
     // If user has active plan, redirect to dashboard
     // Otherwise, redirect to onboarding
     if (activePlan && activePlan.id) {
-      return Astro.redirect('/dashboard');
+      return Astro.redirect("/dashboard");
     } else {
-      return Astro.redirect('/onboarding');
+      return Astro.redirect("/onboarding");
     }
   } catch (err) {
-    console.error('Error in index redirect:', err);
+    console.error("Error in index redirect:", err);
     // Default to dashboard on error
-    return Astro.redirect('/dashboard');
+    return Astro.redirect("/dashboard");
   }
 }
 
 // If user is not authenticated, redirect to onboarding
 // Onboarding is now available for unauthenticated users
-return Astro.redirect('/onboarding');
+return Astro.redirect("/onboarding");
 ---

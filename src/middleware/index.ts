@@ -1,15 +1,8 @@
-import { defineMiddleware } from 'astro:middleware';
-import { createSupabaseServerInstance } from '../db/supabase.server';
+import { defineMiddleware } from "astro:middleware";
+import { createSupabaseServerInstance } from "../db/supabase.server";
 
 // Public paths that don't require authentication
-const PUBLIC_PATHS = [
-  '/',
-  '/auth/login',
-  '/auth/register',
-  '/auth/reset',
-  '/auth/reset/callback',
-  '/onboarding',
-];
+const PUBLIC_PATHS = ["/", "/auth/login", "/auth/register", "/auth/reset", "/auth/reset/callback", "/onboarding"];
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // Create Supabase client instance for this request
@@ -46,22 +39,19 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Check if route requires authentication
   const isPublicPath = PUBLIC_PATHS.includes(context.url.pathname);
-  const isApiPublicPath = context.url.pathname.startsWith('/api/auth/');
-  const isApiPath = context.url.pathname.startsWith('/api/');
+  const isApiPublicPath = context.url.pathname.startsWith("/api/auth/");
+  const isApiPath = context.url.pathname.startsWith("/api/");
 
   // Redirect to login if accessing protected route without authentication
   if (!isPublicPath && !isApiPublicPath && !context.locals.user) {
     // For API endpoints, return 401 instead of redirect
     if (isApiPath) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    
+
     // For pages, redirect to login
     const redirectUrl = `/auth/login?next=${encodeURIComponent(context.url.pathname)}`;
     return context.redirect(redirectUrl);

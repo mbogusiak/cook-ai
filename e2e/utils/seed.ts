@@ -24,9 +24,7 @@ export async function createAuthenticatedClient(): Promise<SupabaseClientType> {
   const supabaseKey = process.env.SUPABASE_PUBLIC_KEY!;
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_PUBLIC_KEY must be defined in .env.test",
-    );
+    throw new Error("SUPABASE_URL and SUPABASE_PUBLIC_KEY must be defined in .env.test");
   }
 
   const supabase = createClient<Database>(supabaseUrl, supabaseKey);
@@ -52,9 +50,7 @@ export async function createAuthenticatedClient(): Promise<SupabaseClientType> {
  * Clean up all test data for the E2E test user
  * Deletes in correct order to respect foreign key constraints
  */
-export async function cleanupTestData(
-  supabase: SupabaseClientType,
-): Promise<void> {
+export async function cleanupTestData(supabase: SupabaseClientType): Promise<void> {
   console.log("\n🧹 Cleaning up existing test data...");
 
   const testUser = getTestUser();
@@ -80,20 +76,14 @@ export async function cleanupTestData(
   const planIds = plans.map((p) => p.id);
 
   // Get all plan_day IDs for these plans
-  const { data: planDays } = await supabase
-    .from("plan_days")
-    .select("id")
-    .in("plan_id", planIds);
+  const { data: planDays } = await supabase.from("plan_days").select("id").in("plan_id", planIds);
 
   const planDayIds = planDays?.map((pd) => pd.id) ?? [];
 
   // Delete in correct order to respect foreign key constraints
   // 1. Delete plan_meals first (child table)
   console.log("  Deleting plan_meals...");
-  const { error: deleteMealsError } = await supabase
-    .from("plan_meals")
-    .delete()
-    .eq("user_id", testUser.id);
+  const { error: deleteMealsError } = await supabase.from("plan_meals").delete().eq("user_id", testUser.id);
 
   if (deleteMealsError) {
     console.error("Failed to delete plan_meals:", deleteMealsError.message);
@@ -118,10 +108,7 @@ export async function cleanupTestData(
 
   // 3. Delete plan_days
   console.log("  Deleting plan_days...");
-  const { error: deleteDaysError } = await supabase
-    .from("plan_days")
-    .delete()
-    .in("plan_id", planIds);
+  const { error: deleteDaysError } = await supabase.from("plan_days").delete().in("plan_id", planIds);
 
   if (deleteDaysError) {
     console.error("Failed to delete plan_days:", deleteDaysError.message);
@@ -131,10 +118,7 @@ export async function cleanupTestData(
 
   // 4. Delete plans
   console.log("  Deleting plans...");
-  const { error: deletePlansError } = await supabase
-    .from("plans")
-    .delete()
-    .in("id", planIds);
+  const { error: deletePlansError } = await supabase.from("plans").delete().in("id", planIds);
 
   if (deletePlansError) {
     console.error("Failed to delete plans:", deletePlansError.message);
@@ -143,15 +127,10 @@ export async function cleanupTestData(
   console.log("  ✓ Deleted plans");
 
   // Verify deletion
-  const { data: remainingPlans } = await supabase
-    .from("plans")
-    .select("id")
-    .eq("user_id", testUser.id);
+  const { data: remainingPlans } = await supabase.from("plans").select("id").eq("user_id", testUser.id);
 
   if (remainingPlans && remainingPlans.length > 0) {
-    console.warn(
-      `⚠️  ${remainingPlans.length} plan(s) still exist after deletion - you may need manual cleanup`,
-    );
+    console.warn(`⚠️  ${remainingPlans.length} plan(s) still exist after deletion - you may need manual cleanup`);
   } else {
     console.log("✓ Cleanup complete");
   }
@@ -160,9 +139,7 @@ export async function cleanupTestData(
 /**
  * Seed user settings if they don't exist
  */
-export async function seedUserSettings(
-  supabase: SupabaseClientType,
-): Promise<void> {
+export async function seedUserSettings(supabase: SupabaseClientType): Promise<void> {
   console.log("\n👤 Seeding user settings...");
 
   const testUser = getTestUser();
@@ -175,7 +152,7 @@ export async function seedUserSettings(
     },
     {
       onConflict: "user_id",
-    },
+    }
   );
 
   if (error) {
@@ -197,15 +174,12 @@ export async function seedUserSettings(
 async function getTestRecipes(
   supabase: SupabaseClientType,
   slot: MealSlot,
-  requireMultiPortion = false,
+  requireMultiPortion = false
 ): Promise<Database["public"]["Tables"]["recipes"]["Row"][]> {
   const { min, max } = getCalorieRange(slot);
 
   // First, get recipe IDs for this slot
-  const { data: recipeSlots } = await supabase
-    .from("recipe_slots")
-    .select("recipe_id")
-    .eq("slot", slot);
+  const { data: recipeSlots } = await supabase.from("recipe_slots").select("recipe_id").eq("slot", slot);
 
   const recipeIds = recipeSlots?.map((rs) => rs.recipe_id) ?? [];
 
@@ -236,7 +210,7 @@ async function getTestRecipes(
 
   if (!data || data.length === 0) {
     throw new Error(
-      `No recipes found for ${slot} with calories ${min}-${max}${requireMultiPortion ? " and portions > 1" : ""}`,
+      `No recipes found for ${slot} with calories ${min}-${max}${requireMultiPortion ? " and portions > 1" : ""}`
     );
   }
 
@@ -246,9 +220,7 @@ async function getTestRecipes(
 /**
  * Seed a complete 7-day baseline plan with meals
  */
-export async function seedBaselinePlan(
-  supabase: SupabaseClientType,
-): Promise<number> {
+export async function seedBaselinePlan(supabase: SupabaseClientType): Promise<number> {
   console.log("\n📅 Seeding baseline plan...");
 
   const testUser = getTestUser();
@@ -300,18 +272,13 @@ export async function seedBaselinePlan(
       plan_day_id: planDay.id,
       slot,
       calories_target: getCalorieTarget(slot),
-    })),
+    }))
   );
 
-  const { error: targetsError } = await supabase
-    .from("plan_day_slot_targets")
-    .insert(slotTargetsToInsert);
+  const { error: targetsError } = await supabase.from("plan_day_slot_targets").insert(slotTargetsToInsert);
 
   if (targetsError) {
-    console.error(
-      "Failed to create plan_day_slot_targets:",
-      targetsError.message,
-    );
+    console.error("Failed to create plan_day_slot_targets:", targetsError.message);
     throw targetsError;
   }
 
@@ -319,10 +286,7 @@ export async function seedBaselinePlan(
 
   // Fetch recipes for each slot
   console.log("\n🍳 Fetching recipes for meals...");
-  const recipesBySlot: Record<
-    MealSlot,
-    Database["public"]["Tables"]["recipes"]["Row"][]
-  > = {
+  const recipesBySlot: Record<MealSlot, Database["public"]["Tables"]["recipes"]["Row"][]> = {
     breakfast: [],
     lunch: [],
     dinner: [],
@@ -336,23 +300,11 @@ export async function seedBaselinePlan(
   }
 
   // Fetch multi-portion recipes for lunch and dinner
-  const multiPortionLunchRecipes = await getTestRecipes(
-    supabase,
-    "lunch",
-    true,
-  );
-  const multiPortionDinnerRecipes = await getTestRecipes(
-    supabase,
-    "dinner",
-    true,
-  );
+  const multiPortionLunchRecipes = await getTestRecipes(supabase, "lunch", true);
+  const multiPortionDinnerRecipes = await getTestRecipes(supabase, "dinner", true);
 
-  console.log(
-    `  ✓ Found ${multiPortionLunchRecipes.length} multi-portion lunch recipes`,
-  );
-  console.log(
-    `  ✓ Found ${multiPortionDinnerRecipes.length} multi-portion dinner recipes`,
-  );
+  console.log(`  ✓ Found ${multiPortionLunchRecipes.length} multi-portion lunch recipes`);
+  console.log(`  ✓ Found ${multiPortionDinnerRecipes.length} multi-portion dinner recipes`);
 
   // Generate UUID-like IDs for multi-portion groups
   const multiPortionGroupIds = {
@@ -362,8 +314,7 @@ export async function seedBaselinePlan(
 
   // Create meals
   console.log("\n🍽️  Creating meals...");
-  const mealsToInsert: Database["public"]["Tables"]["plan_meals"]["Insert"][] =
-    [];
+  const mealsToInsert: Database["public"]["Tables"]["plan_meals"]["Insert"][] = [];
 
   let mealIndex = 0;
 
@@ -374,9 +325,7 @@ export async function seedBaselinePlan(
       const status = BASELINE_MEAL_STATUSES[mealIndex];
 
       // Check if this meal should be multi-portion
-      const multiPortionConfig = MULTI_PORTION_MEALS.find(
-        (mp) => mp.dayIndex === dayIndex && mp.slot === slot,
-      );
+      const multiPortionConfig = MULTI_PORTION_MEALS.find((mp) => mp.dayIndex === dayIndex && mp.slot === slot);
 
       let recipe;
       let isLeftover = false;
@@ -387,24 +336,15 @@ export async function seedBaselinePlan(
         // This is a multi-portion meal or leftover
         isLeftover = multiPortionConfig.isLeftover;
         portionsToCook = multiPortionConfig.portionsToCook;
-        multiPortionGroupId =
-          multiPortionGroupIds[
-            multiPortionConfig.groupId as keyof typeof multiPortionGroupIds
-          ];
+        multiPortionGroupId = multiPortionGroupIds[multiPortionConfig.groupId as keyof typeof multiPortionGroupIds];
 
         // For leftovers, find the original meal's recipe
         if (isLeftover) {
-          const originalMeal = mealsToInsert.find(
-            (m) => m.multi_portion_group_id === multiPortionGroupId,
-          );
+          const originalMeal = mealsToInsert.find((m) => m.multi_portion_group_id === multiPortionGroupId);
           if (!originalMeal) {
-            throw new Error(
-              `Could not find original meal for leftover group ${multiPortionGroupId}`,
-            );
+            throw new Error(`Could not find original meal for leftover group ${multiPortionGroupId}`);
           }
-          recipe = recipesBySlot[slot].find(
-            (r) => r.id === originalMeal.recipe_id,
-          );
+          recipe = recipesBySlot[slot].find((r) => r.id === originalMeal.recipe_id);
         } else {
           // For original multi-portion meals, pick a recipe with portions > 1
           if (slot === "lunch") {
@@ -441,9 +381,7 @@ export async function seedBaselinePlan(
     }
   }
 
-  const { error: mealsError } = await supabase
-    .from("plan_meals")
-    .insert(mealsToInsert);
+  const { error: mealsError } = await supabase.from("plan_meals").insert(mealsToInsert);
 
   if (mealsError) {
     console.error("Failed to create plan_meals:", mealsError.message);
@@ -451,18 +389,10 @@ export async function seedBaselinePlan(
   }
 
   console.log(`✓ Created ${mealsToInsert.length} meals`);
-  console.log(
-    `  - ${mealsToInsert.filter((m) => m.status === "planned").length} planned`,
-  );
-  console.log(
-    `  - ${mealsToInsert.filter((m) => m.status === "completed").length} completed`,
-  );
-  console.log(
-    `  - ${mealsToInsert.filter((m) => m.status === "skipped").length} skipped`,
-  );
-  console.log(
-    `  - ${mealsToInsert.filter((m) => m.is_leftover).length} leftovers`,
-  );
+  console.log(`  - ${mealsToInsert.filter((m) => m.status === "planned").length} planned`);
+  console.log(`  - ${mealsToInsert.filter((m) => m.status === "completed").length} completed`);
+  console.log(`  - ${mealsToInsert.filter((m) => m.status === "skipped").length} skipped`);
+  console.log(`  - ${mealsToInsert.filter((m) => m.is_leftover).length} leftovers`);
 
   console.log("\n✅ Baseline plan seeded successfully");
 

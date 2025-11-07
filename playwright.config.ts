@@ -1,9 +1,9 @@
-import { defineConfig, devices } from "@playwright/test"
+import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "node:path";
 dotenv.config({
   path: path.resolve(process.cwd(), ".env.e2e"),
-  override: true
+  override: true,
 });
 
 export default defineConfig({

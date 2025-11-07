@@ -9,61 +9,61 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface ConfirmDialogProps {
-  isOpen: boolean
-  action: 'archive' | 'cancel' | null
-  onConfirm: () => void
-  onCancel: () => void
-  isLoading?: boolean
+  isOpen: boolean;
+  action: "archive" | "cancel" | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isLoading?: boolean;
 }
 
 /**
  * Returns dialog title based on action type
  */
-function getTitle(action: 'archive' | 'cancel' | null): string {
-  if (action === 'archive') {
-    return 'Archiwizować plan?'
+function getTitle(action: "archive" | "cancel" | null): string {
+  if (action === "archive") {
+    return "Archiwizować plan?";
   }
-  if (action === 'cancel') {
-    return 'Anulować plan?'
+  if (action === "cancel") {
+    return "Anulować plan?";
   }
-  return ''
+  return "";
 }
 
 /**
  * Returns dialog description based on action type
  */
-function getDescription(action: 'archive' | 'cancel' | null): string {
-  if (action === 'archive') {
-    return 'Plan zostanie oznaczony jako ukończony. Nie będziesz mógł już edytować posiłków.'
+function getDescription(action: "archive" | "cancel" | null): string {
+  if (action === "archive") {
+    return "Plan zostanie oznaczony jako ukończony. Nie będziesz mógł już edytować posiłków.";
   }
-  if (action === 'cancel') {
-    return 'Plan zostanie anulowany. Wszystkie dane zostaną zachowane, ale nie będziesz mógł już edytować posiłków.'
+  if (action === "cancel") {
+    return "Plan zostanie anulowany. Wszystkie dane zostaną zachowane, ale nie będziesz mógł już edytować posiłków.";
   }
-  return ''
+  return "";
 }
 
 /**
  * Returns button text based on action type
  */
-function getConfirmButtonText(action: 'archive' | 'cancel' | null, isLoading: boolean): string {
+function getConfirmButtonText(action: "archive" | "cancel" | null, isLoading: boolean): string {
   if (isLoading) {
-    return 'Przetwarzanie...'
+    return "Przetwarzanie...";
   }
-  if (action === 'archive') {
-    return 'Archiwizuj'
+  if (action === "archive") {
+    return "Archiwizuj";
   }
-  if (action === 'cancel') {
-    return 'Anuluj plan'
+  if (action === "cancel") {
+    return "Anuluj plan";
   }
-  return 'Potwierdź'
+  return "Potwierdź";
 }
 
 export function ConfirmDialog({ isOpen, action, onConfirm, onCancel, isLoading }: ConfirmDialogProps) {
-  if (!action) return null
+  if (!action) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
@@ -73,23 +73,14 @@ export function ConfirmDialog({ isOpen, action, onConfirm, onCancel, isLoading }
           <DialogDescription>{getDescription(action)}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={onCancel}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={onCancel} disabled={isLoading}>
             Cofnij
           </Button>
-          <Button
-            variant={action === 'cancel' ? 'destructive' : 'default'}
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
+          <Button variant={action === "cancel" ? "destructive" : "default"} onClick={onConfirm} disabled={isLoading}>
             {getConfirmButtonText(action, isLoading || false)}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

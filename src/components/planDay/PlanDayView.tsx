@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { pl } from 'date-fns/locale';
-import { usePlanDayQuery } from './hooks';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { ErrorState } from '@/components/planOverview/ErrorState';
-import { MealSlot } from './MealSlot';
-import { DayNavigator } from './DayNavigator';
-import { SwapModal } from './SwapModal';
-import { RecipePreviewModal } from './RecipePreviewModal';
-import type { MealViewModel } from './types';
+import React, { useState } from "react";
+import { format } from "date-fns";
+import { pl } from "date-fns/locale";
+import { usePlanDayQuery } from "./hooks";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/planOverview/ErrorState";
+import { MealSlot } from "./MealSlot";
+import { DayNavigator } from "./DayNavigator";
+import { SwapModal } from "./SwapModal";
+import { RecipePreviewModal } from "./RecipePreviewModal";
+import type { MealViewModel } from "./types";
 
-import { getSupabaseBrowserClient } from '@/db/supabase.browser.client';
+import { getSupabaseBrowserClient } from "@/db/supabase.browser.client";
 
 interface PlanDayViewProps {
   planId: number;
@@ -62,7 +62,7 @@ export const PlanDayView: React.FC<PlanDayViewProps> = ({ planId, date, supabase
   }
 
   if (isError) {
-    return <ErrorState error={{ message: error?.message || 'Wystąpił błąd' }} onRetry={refetch} />;
+    return <ErrorState error={{ message: error?.message || "Wystąpił błąd" }} onRetry={refetch} />;
   }
 
   // Calculate total calories for the day
@@ -93,10 +93,7 @@ export const PlanDayView: React.FC<PlanDayViewProps> = ({ planId, date, supabase
               <div className="w-20" />
             </div>
             <div className="flex justify-center">
-              <Button
-                variant="outline"
-                onClick={() => window.location.href = `/plans/${planId}`}
-              >
+              <Button variant="outline" onClick={() => (window.location.href = `/plans/${planId}`)}>
                 ← Wróć do planu
               </Button>
             </div>
@@ -104,10 +101,18 @@ export const PlanDayView: React.FC<PlanDayViewProps> = ({ planId, date, supabase
         )}
 
         <main className="grid grid-cols-1 md:grid-cols-2 gap-8 md:grid-rows-2 auto-rows-fr min-h-[calc(100vh-300px)]">
-          {data?.slots.breakfast && <MealSlot slot={data.slots.breakfast} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />}
-          {data?.slots.lunch && <MealSlot slot={data.slots.lunch} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />}
-          {data?.slots.dinner && <MealSlot slot={data.slots.dinner} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />}
-          {data?.slots.snack && <MealSlot slot={data.slots.snack} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />}
+          {data?.slots.breakfast && (
+            <MealSlot slot={data.slots.breakfast} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />
+          )}
+          {data?.slots.lunch && (
+            <MealSlot slot={data.slots.lunch} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />
+          )}
+          {data?.slots.dinner && (
+            <MealSlot slot={data.slots.dinner} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />
+          )}
+          {data?.slots.snack && (
+            <MealSlot slot={data.slots.snack} onSwap={handleOpenSwapModal} onPreview={handleOpenPreviewModal} />
+          )}
         </main>
       </div>
 

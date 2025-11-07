@@ -34,8 +34,14 @@ test.describe("Authentication", () => {
       await page.waitForTimeout(2000);
 
       // Check for success indicators
-      const hasSuccessMessage = await page.getByText(/Rejestracja zakończona powodzeniem/).isVisible().catch(() => false);
-      const hasConfirmationMessage = await page.getByText(/Wysłaliśmy link potwierdzający/).isVisible().catch(() => false);
+      const hasSuccessMessage = await page
+        .getByText(/Rejestracja zakończona powodzeniem/)
+        .isVisible()
+        .catch(() => false);
+      const hasConfirmationMessage = await page
+        .getByText(/Wysłaliśmy link potwierdzający/)
+        .isVisible()
+        .catch(() => false);
 
       if (hasSuccessMessage || hasConfirmationMessage) {
         // If email confirmation is required, the test should pass as registration succeeded
@@ -105,12 +111,18 @@ test.describe("Authentication", () => {
       // We accept both as valid behavior
       await page.waitForTimeout(1000);
 
-      const hasError = await page.getByTestId('register-error').isVisible().catch(() => false);
-      const hasConfirmationMessage = await page.getByText(/Wysłaliśmy link potwierdzający/).isVisible().catch(() => false);
+      const hasError = await page
+        .getByTestId("register-error")
+        .isVisible()
+        .catch(() => false);
+      const hasConfirmationMessage = await page
+        .getByText(/Wysłaliśmy link potwierdzający/)
+        .isVisible()
+        .catch(() => false);
 
       // Either an error should be shown OR a confirmation message (both are acceptable)
       if (!hasError && !hasConfirmationMessage) {
-        throw new Error('Expected either error message or confirmation message for existing email');
+        throw new Error("Expected either error message or confirmation message for existing email");
       }
     });
   });

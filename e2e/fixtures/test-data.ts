@@ -56,18 +56,14 @@ export function getBaselinePlanStartDate(): Date {
  */
 export function getBaselinePlanDates(): Date[] {
   const startDate = getBaselinePlanStartDate();
-  return Array.from({ length: BASELINE_PLAN.lengthDays }, (_, i) =>
-    addDays(startDate, i),
-  );
+  return Array.from({ length: BASELINE_PLAN.lengthDays }, (_, i) => addDays(startDate, i));
 }
 
 /**
  * Calculate calorie target for a given meal slot
  */
 export function getCalorieTarget(slot: MealSlot): number {
-  return Math.round(
-    BASELINE_PLAN.dailyCalories * BASELINE_PLAN.calorieDistribution[slot],
-  );
+  return Math.round(BASELINE_PLAN.dailyCalories * BASELINE_PLAN.calorieDistribution[slot]);
 }
 
 /**

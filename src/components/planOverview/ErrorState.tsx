@@ -3,15 +3,15 @@
  * Displays error messages with retry option
  */
 
-import { Button } from '@/components/ui/button'
-import { AlertCircle } from 'lucide-react'
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 interface ErrorStateProps {
   error: {
-    status?: number
-    message: string
-  }
-  onRetry?: () => void
+    status?: number;
+    message: string;
+  };
+  onRetry?: () => void;
 }
 
 export function ErrorState({ error, onRetry }: ErrorStateProps) {
@@ -23,12 +23,8 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold">
-            {error.status === 404 ? 'Nie znaleziono planu' : 'Wystąpił błąd'}
-          </h2>
-          <p className="text-muted-foreground">
-            {error.message}
-          </p>
+          <h2 className="text-2xl font-semibold">{error.status === 404 ? "Nie znaleziono planu" : "Wystąpił błąd"}</h2>
+          <p className="text-muted-foreground">{error.message}</p>
         </div>
 
         {onRetry && (
@@ -38,5 +34,5 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

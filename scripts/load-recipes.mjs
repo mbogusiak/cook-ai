@@ -64,7 +64,7 @@ function generateSlug(name) {
  */
 function transformRecipe(cookidoRecipe) {
   const maros = cookidoRecipe.maros || {};
-  
+
   return {
     slug: cookidoRecipe.id, // Use Cookido ID as slug (guaranteed unique)
     name: cookidoRecipe.nazwa || "",
@@ -97,7 +97,7 @@ async function loadRecipes(filePath, batchSize = 100) {
     console.log(`✅ Loaded ${cookidoRecipes.length} recipes from file`);
 
     const existingSlugs = new Set();
-    const transformedRecipes = cookidoRecipes.map(r => transformRecipe(r));
+    const transformedRecipes = cookidoRecipes.map((r) => transformRecipe(r));
 
     // Process in batches
     let insertedCount = 0;
@@ -129,9 +129,7 @@ async function loadRecipes(filePath, batchSize = 100) {
         }
 
         insertedCount += insertedRecipes.length;
-        console.log(
-          `✅ Batch ${batchNum}: Inserted ${insertedRecipes.length} recipes`
-        );
+        console.log(`✅ Batch ${batchNum}: Inserted ${insertedRecipes.length} recipes`);
 
         // Insert recipe slots
         const recipeSlots = [];
@@ -154,9 +152,7 @@ async function loadRecipes(filePath, batchSize = 100) {
         }
 
         if (recipeSlots.length > 0) {
-          const { error: slotsError } = await supabase
-            .from("recipe_slots")
-            .insert(recipeSlots);
+          const { error: slotsError } = await supabase.from("recipe_slots").insert(recipeSlots);
 
           if (slotsError) {
             console.error(`⚠️  Batch ${batchNum} slots error:`, slotsError.message);

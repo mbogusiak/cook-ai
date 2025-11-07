@@ -1,55 +1,47 @@
-import React from "react"
-import { ChefHat, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { useOnboardingForm } from "./useOnboardingForm.ts"
-import { PlanGeneratorForm } from "./PlanGeneratorForm.tsx"
-import { StartDateSelector } from "./StartDateSelector.tsx"
-import { BlockingLoader } from "./BlockingLoader.tsx"
+import React from "react";
+import { ChefHat, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useOnboardingForm } from "./useOnboardingForm.ts";
+import { PlanGeneratorForm } from "./PlanGeneratorForm.tsx";
+import { StartDateSelector } from "./StartDateSelector.tsx";
+import { BlockingLoader } from "./BlockingLoader.tsx";
 
 interface OnboardingPageProps {
   initialUser?: {
-    id: string
-    email?: string
-  }
+    id: string;
+    email?: string;
+  };
 }
 
 export default function OnboardingPage({ initialUser }: OnboardingPageProps): React.ReactElement {
-  const {
-    values,
-    errors,
-    isSubmitting,
-    setField,
-    validate,
-    submit,
-    serverMessage,
-    clearServerMessage,
-  } = useOnboardingForm({ initialUser })
+  const { values, errors, isSubmitting, setField, validate, submit, serverMessage, clearServerMessage } =
+    useOnboardingForm({ initialUser });
 
-  const [step, setStep] = React.useState<1 | 2>(1)
+  const [step, setStep] = React.useState<1 | 2>(1);
 
   function goNext(): void {
-    const isValid = validate({ validateStartDate: false })
-    if (!isValid) return
-    clearServerMessage()
-    setStep(2)
+    const isValid = validate({ validateStartDate: false });
+    if (!isValid) return;
+    clearServerMessage();
+    setStep(2);
   }
 
   function goBack(): void {
-    clearServerMessage()
-    setStep(1)
+    clearServerMessage();
+    setStep(1);
   }
 
   async function handleGenerate(): Promise<void> {
-    const ok = validate({ validateStartDate: true })
-    if (!ok) return
-    const planId = await submit()
+    const ok = validate({ validateStartDate: true });
+    if (!ok) return;
+    const planId = await submit();
     if (planId) {
-      window.location.assign(`/plans/${planId}`)
+      window.location.assign(`/plans/${planId}`);
     }
   }
 
-  const progressPercent = step === 1 ? 50 : 100
+  const progressPercent = step === 1 ? 50 : 100;
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4">
@@ -68,31 +60,26 @@ export default function OnboardingPage({ initialUser }: OnboardingPageProps): Re
 
       {/* Progress Bar */}
       <div className="w-full h-1 bg-muted rounded-full mb-8 overflow-hidden">
-        <div
-          className="h-full bg-warning transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
-        />
+        <div className="h-full bg-warning transition-all duration-300" style={{ width: `${progressPercent}%` }} />
       </div>
 
       {/* Error/Message Display */}
       {serverMessage && (
-        <Card 
-          role="alert" 
-          aria-live="polite" 
-          className={serverMessage.includes("Zaloguj się") 
-            ? "border-warning bg-warning/10 mb-6" 
-            : "border-muted mb-6"
-          }
+        <Card
+          role="alert"
+          aria-live="polite"
+          className={serverMessage.includes("Zaloguj się") ? "border-warning bg-warning/10 mb-6" : "border-muted mb-6"}
         >
           <CardContent className="flex items-center justify-center py-3">
             <div className="flex items-center justify-center gap-3">
-              {serverMessage.includes("Zaloguj się") && (
-                <AlertCircle className="h-5 w-5 text-warning flex-shrink-0" />
-              )}
-              <p className={serverMessage.includes("Zaloguj się") 
-                ? "text-foreground font-medium" 
-                : "text-muted-foreground text-sm"
-              }>
+              {serverMessage.includes("Zaloguj się") && <AlertCircle className="h-5 w-5 text-warning flex-shrink-0" />}
+              <p
+                className={
+                  serverMessage.includes("Zaloguj się")
+                    ? "text-foreground font-medium"
+                    : "text-muted-foreground text-sm"
+                }
+              >
                 {serverMessage}
               </p>
             </div>
@@ -102,12 +89,7 @@ export default function OnboardingPage({ initialUser }: OnboardingPageProps): Re
 
       {/* Form Content */}
       {step === 1 ? (
-        <PlanGeneratorForm
-          values={values}
-          errors={errors}
-          onFieldChange={setField}
-          isSubmitting={isSubmitting}
-        />
+        <PlanGeneratorForm values={values} errors={errors} onFieldChange={setField} isSubmitting={isSubmitting} />
       ) : (
         <StartDateSelector
           value={values.start_date}
@@ -119,13 +101,7 @@ export default function OnboardingPage({ initialUser }: OnboardingPageProps): Re
       {/* Button Container */}
       <div className="flex gap-3 mt-8">
         {step === 2 && (
-          <Button
-            variant="outline"
-            type="button"
-            onClick={goBack}
-            disabled={isSubmitting}
-            className="flex-1"
-          >
+          <Button variant="outline" type="button" onClick={goBack} disabled={isSubmitting} className="flex-1">
             Wstecz
           </Button>
         )}
@@ -143,7 +119,5 @@ export default function OnboardingPage({ initialUser }: OnboardingPageProps): Re
 
       <BlockingLoader open={isSubmitting} message="Generowanie planu..." />
     </div>
-  )
+  );
 }
-
-

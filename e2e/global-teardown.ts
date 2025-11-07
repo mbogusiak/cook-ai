@@ -19,16 +19,14 @@ async function globalTeardown() {
   // Ensure .env.e2e is loaded and overrides any existing env vars
   dotenv.config({
     path: path.resolve(process.cwd(), ".env.e2e"),
-    override: true
+    override: true,
   });
 
   const shouldCleanup = process.env.E2E_CLEANUP === "true";
 
   try {
     if (!shouldCleanup) {
-      console.log(
-        "ℹ️  Skipping cleanup (E2E_CLEANUP not set to 'true' in .env.e2e)",
-      );
+      console.log("ℹ️  Skipping cleanup (E2E_CLEANUP not set to 'true' in .env.e2e)");
       console.log("   Test data will remain in database for debugging");
       console.log("\n" + "=".repeat(60) + "\n");
       return;

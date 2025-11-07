@@ -1,60 +1,60 @@
-import React from "react"
-import { Mail } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { resetRequestSchema, type ResetRequestFormValues } from "@/lib/schemas/auth"
+import React from "react";
+import { Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { resetRequestSchema, type ResetRequestFormValues } from "@/lib/schemas/auth";
 
-type Props = {
-  onSubmit?: (values: ResetRequestFormValues) => Promise<void> | void
-  isSubmitting?: boolean
-  error?: string | null
-  success?: boolean
+interface Props {
+  onSubmit?: (values: ResetRequestFormValues) => Promise<void> | void;
+  isSubmitting?: boolean;
+  error?: string | null;
+  success?: boolean;
 }
 
 export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, success }: Props): React.ReactElement {
   const [values, setValues] = React.useState<ResetRequestFormValues>({
     email: "",
-  })
-  const [errors, setErrors] = React.useState<Partial<Record<keyof ResetRequestFormValues, string>>>({})
-  const [formError, setFormError] = React.useState<string | null>(error || null)
+  });
+  const [errors, setErrors] = React.useState<Partial<Record<keyof ResetRequestFormValues, string>>>({});
+  const [formError, setFormError] = React.useState<string | null>(error || null);
 
   React.useEffect(() => {
-    setFormError(error || null)
-  }, [error])
+    setFormError(error || null);
+  }, [error]);
 
   function handleFieldChange(field: keyof ResetRequestFormValues, value: string): void {
-    setValues((prev) => ({ ...prev, [field]: value }))
+    setValues((prev) => ({ ...prev, [field]: value }));
     // Clear field error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
     // Clear form-level error when user starts typing
     if (formError) {
-      setFormError(null)
+      setFormError(null);
     }
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault()
-    setErrors({})
-    setFormError(null)
+    e.preventDefault();
+    setErrors({});
+    setFormError(null);
 
-    const result = resetRequestSchema.safeParse(values)
+    const result = resetRequestSchema.safeParse(values);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof ResetRequestFormValues, string>> = {}
+      const fieldErrors: Partial<Record<keyof ResetRequestFormValues, string>> = {};
       result.error.errors.forEach((err) => {
         if (err.path[0]) {
-          fieldErrors[err.path[0] as keyof ResetRequestFormValues] = err.message
+          fieldErrors[err.path[0] as keyof ResetRequestFormValues] = err.message;
         }
-      })
-      setErrors(fieldErrors)
-      return
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
     try {
-      await onSubmit?.(result.data)
+      await onSubmit?.(result.data);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas wysyłania linku resetu")
+      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas wysyłania linku resetu");
     }
   }
 
@@ -78,7 +78,7 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -121,7 +121,12 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="reset-request-error">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="text-sm text-destructive text-center"
+          data-testid="reset-request-error"
+        >
           {formError}
         </div>
       )}
@@ -136,10 +141,5 @@ export function AuthResetRequestForm({ onSubmit, isSubmitting = false, error, su
         {isSubmitting ? "Wysyłanie..." : "Wyślij link resetu"}
       </Button>
     </form>
-  )
+  );
 }
-
-
-
-
-

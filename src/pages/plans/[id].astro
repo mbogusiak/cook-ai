@@ -5,8 +5,8 @@
  * Path: /plans/{id}
  */
 
-import Layout from '@/layouts/Layout.astro'
-import { PlanOverviewContent } from '@/components/planOverview/PlanOverviewContent'
+import Layout from "@/layouts/Layout.astro";
+import { PlanOverviewContent } from "@/components/planOverview/PlanOverviewContent";
 
 // SSR Guard: Redirect to login if not authenticated
 const { user } = Astro.locals;
@@ -17,14 +17,14 @@ if (!user) {
 }
 
 // Get plan ID from URL params
-const { id } = Astro.params
+const { id } = Astro.params;
 
 // Validate plan ID
 if (!id || isNaN(Number(id))) {
-  return Astro.redirect('/dashboard')
+  return Astro.redirect("/dashboard");
 }
 
-const planId = Number(id)
+const planId = Number(id);
 ---
 
 <Layout title={`Plan #${planId}`}>

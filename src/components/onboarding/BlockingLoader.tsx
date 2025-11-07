@@ -1,12 +1,12 @@
-import React from "react"
+import React from "react";
 
-type Props = {
-  open: boolean
-  message?: string
+interface Props {
+  open: boolean;
+  message?: string;
 }
 
 export function BlockingLoader({ open, message }: Props): React.ReactElement | null {
-  if (!open) return null
+  if (!open) return null;
   return (
     <div
       role="alert"
@@ -19,7 +19,5 @@ export function BlockingLoader({ open, message }: Props): React.ReactElement | n
         <p className="text-sm text-muted-foreground">{message ?? "Przetwarzanie..."}</p>
       </div>
     </div>
-  )
+  );
 }
-
-

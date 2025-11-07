@@ -1,73 +1,79 @@
-import React from "react"
-import { Lock } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { resetConfirmSchema, type ResetConfirmFormValues } from "@/lib/schemas/auth"
+import React from "react";
+import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { resetConfirmSchema, type ResetConfirmFormValues } from "@/lib/schemas/auth";
 
-type Props = {
-  onSubmit?: (values: Omit<ResetConfirmFormValues, "confirmPassword">) => Promise<void> | void
-  isSubmitting?: boolean
-  error?: string | null
-  isExpired?: boolean
-  onResend?: () => Promise<void> | void
+interface Props {
+  onSubmit?: (values: Omit<ResetConfirmFormValues, "confirmPassword">) => Promise<void> | void;
+  isSubmitting?: boolean;
+  error?: string | null;
+  isExpired?: boolean;
+  onResend?: () => Promise<void> | void;
 }
 
-export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, isExpired, onResend }: Props): React.ReactElement {
+export function AuthResetConfirmForm({
+  onSubmit,
+  isSubmitting = false,
+  error,
+  isExpired,
+  onResend,
+}: Props): React.ReactElement {
   const [values, setValues] = React.useState<ResetConfirmFormValues>({
     password: "",
     confirmPassword: "",
-  })
-  const [errors, setErrors] = React.useState<Partial<Record<keyof ResetConfirmFormValues, string>>>({})
-  const [formError, setFormError] = React.useState<string | null>(error || null)
-  const [isResending, setIsResending] = React.useState(false)
+  });
+  const [errors, setErrors] = React.useState<Partial<Record<keyof ResetConfirmFormValues, string>>>({});
+  const [formError, setFormError] = React.useState<string | null>(error || null);
+  const [isResending, setIsResending] = React.useState(false);
 
   React.useEffect(() => {
-    setFormError(error || null)
-  }, [error])
+    setFormError(error || null);
+  }, [error]);
 
   function handleFieldChange(field: keyof ResetConfirmFormValues, value: string): void {
-    setValues((prev) => ({ ...prev, [field]: value }))
+    setValues((prev) => ({ ...prev, [field]: value }));
     // Clear field error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
     // Clear form-level error when user starts typing
     if (formError) {
-      setFormError(null)
+      setFormError(null);
     }
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault()
-    setErrors({})
-    setFormError(null)
+    e.preventDefault();
+    setErrors({});
+    setFormError(null);
 
-    const result = resetConfirmSchema.safeParse(values)
+    const result = resetConfirmSchema.safeParse(values);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof ResetConfirmFormValues, string>> = {}
+      const fieldErrors: Partial<Record<keyof ResetConfirmFormValues, string>> = {};
       result.error.errors.forEach((err) => {
         if (err.path[0]) {
-          fieldErrors[err.path[0] as keyof ResetConfirmFormValues] = err.message
+          fieldErrors[err.path[0] as keyof ResetConfirmFormValues] = err.message;
         }
-      })
-      setErrors(fieldErrors)
-      return
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
     try {
-      const { confirmPassword, ...submitData } = result.data
-      await onSubmit?.(submitData)
+      const { confirmPassword, ...submitData } = result.data;
+      await onSubmit?.(submitData);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas resetu hasła")
+      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas resetu hasła");
     }
   }
 
   async function handleResend(): Promise<void> {
-    setIsResending(true)
+    setIsResending(true);
     try {
-      await onResend?.()
+      await onResend?.();
     } finally {
-      setIsResending(false)
+      setIsResending(false);
     }
   }
 
@@ -83,12 +89,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
             Link do resetu hasła wygasł (ważność 1 godzina). Możesz wygenerować nowy link.
           </p>
           {onResend && (
-            <Button
-              type="button"
-              onClick={handleResend}
-              disabled={isResending}
-              className="w-full h-12 text-base"
-            >
+            <Button type="button" onClick={handleResend} disabled={isResending} className="w-full h-12 text-base">
               {isResending ? "Wysyłanie..." : "Wyślij nowy link"}
             </Button>
           )}
@@ -99,7 +100,7 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -176,7 +177,12 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="reset-confirm-error">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="text-sm text-destructive text-center"
+          data-testid="reset-confirm-error"
+        >
           {formError}
         </div>
       )}
@@ -191,10 +197,5 @@ export function AuthResetConfirmForm({ onSubmit, isSubmitting = false, error, is
         {isSubmitting ? "Resetowanie..." : "Ustaw nowe hasło"}
       </Button>
     </form>
-  )
+  );
 }
-
-
-
-
-

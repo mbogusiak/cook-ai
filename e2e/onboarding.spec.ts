@@ -235,8 +235,8 @@ test.describe("Onboarding & Plan Generation", () => {
       await cleanupTestData(supabase);
 
       // Navigate to onboarding
-      await page.goto('/onboarding');
-      await page.waitForLoadState('networkidle');
+      await page.goto("/onboarding");
+      await page.waitForLoadState("networkidle");
     });
 
     test("should generate plan and redirect to plan details page", async ({ page }) => {
@@ -258,7 +258,7 @@ test.describe("Onboarding & Plan Generation", () => {
       await expect(page).toHaveURL(/\/plans\/\d+$/, { timeout: 30000 });
 
       // Should show the plan overview
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState("networkidle");
       await expect(page.getByTestId("plan-overview")).toBeVisible();
     });
 
@@ -274,10 +274,10 @@ test.describe("Onboarding & Plan Generation", () => {
 
       // Wait for redirect to plan overview page
       await expect(page).toHaveURL(/\/plans\/\d+$/, { timeout: 30000 });
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState("networkidle");
 
       // Navigate to first day by clicking "Zobacz dzień" button
-      const viewDayButton = page.getByRole('link', { name: /zobacz dzień/i }).first();
+      const viewDayButton = page.getByRole("link", { name: /zobacz dzień/i }).first();
       await viewDayButton.click();
       await expect(page).toHaveURL(/\/plans\/\d+\/days\//, { timeout: 10000 });
 
@@ -305,7 +305,7 @@ test.describe("Onboarding & Plan Generation", () => {
       await expect(page).toHaveURL(/\/plans\/\d+/, { timeout: 30000 });
 
       // Verify plan overview is displayed
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState("networkidle");
       await expect(page.getByText(/Plan \d+ \w+ - \d+ \w+ \d{4}/)).toBeVisible();
     });
 
@@ -325,7 +325,7 @@ test.describe("Onboarding & Plan Generation", () => {
       await expect(page).toHaveURL(/\/plans\/\d+/, { timeout: 30000 });
 
       // Verify plan overview is displayed
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState("networkidle");
       await expect(page.getByText(/Plan \d+ \w+ - \d+ \w+ \d{4}/)).toBeVisible();
     });
 
@@ -344,7 +344,7 @@ test.describe("Onboarding & Plan Generation", () => {
       await expect(page).toHaveURL(/\/plans\/\d+/, { timeout: 30000 });
 
       // Verify plan overview is displayed
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState("networkidle");
       await expect(page.getByText(/Plan \d+ \w+ - \d+ \w+ \d{4}/)).toBeVisible();
     });
 
@@ -370,9 +370,11 @@ test.describe("Onboarding & Plan Generation", () => {
 
         if (isOnboarding) {
           // Should show some error message
-          await expect(page.getByRole("alert")).toBeVisible({ timeout: 5000 }).catch(() => {
-            // Error message might not be in alert role
-          });
+          await expect(page.getByRole("alert"))
+            .toBeVisible({ timeout: 5000 })
+            .catch(() => {
+              // Error message might not be in alert role
+            });
         }
       } else {
         // Validation prevented moving to step 2

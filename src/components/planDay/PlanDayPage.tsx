@@ -1,6 +1,6 @@
-import React from 'react';
-import { QueryProvider } from '@/components/QueryProvider';
-import { PlanDayView } from './PlanDayView';
+import React from "react";
+import { QueryProvider } from "@/components/QueryProvider";
+import { PlanDayView } from "./PlanDayView";
 
 interface PlanDayPageProps {
   planId: number;

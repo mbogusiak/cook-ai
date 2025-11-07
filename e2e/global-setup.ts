@@ -19,30 +19,22 @@ async function globalSetup() {
   // Ensure .env.e2e is loaded and overrides any existing env vars
   dotenv.config({
     path: path.resolve(process.cwd(), ".env.e2e"),
-    override: true
+    override: true,
   });
 
   // Verify required environment variables
-  const requiredEnvVars = [
-    "SUPABASE_URL",
-    "SUPABASE_PUBLIC_KEY",
-    "E2E_USERNAME_ID",
-    "E2E_USERNAME",
-    "E2E_PASSWORD",
-  ];
+  const requiredEnvVars = ["SUPABASE_URL", "SUPABASE_PUBLIC_KEY", "E2E_USERNAME_ID", "E2E_USERNAME", "E2E_PASSWORD"];
 
   const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
   if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required environment variables in .env.e2e: ${missingVars.join(", ")}`,
-    );
+    throw new Error(`Missing required environment variables in .env.e2e: ${missingVars.join(", ")}`);
   }
 
   try {
     // Seed the baseline test data
     // Skip plan creation if E2E_SKIP_PLAN_SEED is set (for onboarding tests)
-    const skipPlanSeed = process.env.E2E_SKIP_PLAN_SEED === 'true';
+    const skipPlanSeed = process.env.E2E_SKIP_PLAN_SEED === "true";
     const { planId } = await seedE2EData(skipPlanSeed);
 
     if (!skipPlanSeed) {

@@ -1,12 +1,7 @@
-import React from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Clock, Users } from 'lucide-react';
-import type { MealViewModel } from './types';
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Clock, Users } from "lucide-react";
+import type { MealViewModel } from "./types";
 
 interface RecipePreviewModalProps {
   meal: MealViewModel | null;
@@ -26,9 +21,7 @@ export const RecipePreviewModal: React.FC<RecipePreviewModalProps> = ({ meal, is
 
         <div className="space-y-6 py-4">
           {/* Image */}
-          {meal.imageUrl && (
-            <img src={meal.imageUrl} alt={meal.name} className="w-full h-64 object-cover rounded-lg" />
-          )}
+          {meal.imageUrl && <img src={meal.imageUrl} alt={meal.name} className="w-full h-64 object-cover rounded-lg" />}
 
           {/* Quick info */}
           <div className="flex gap-6 text-sm text-gray-600">

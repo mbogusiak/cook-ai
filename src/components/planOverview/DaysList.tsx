@@ -2,12 +2,12 @@
  * List/grid of day cards
  */
 
-import { DayCard } from './DayCard'
-import type { DayViewModel } from './types'
+import { DayCard } from "./DayCard";
+import type { DayViewModel } from "./types";
 
 interface DaysListProps {
-  days: DayViewModel[]
-  planId: number
+  days: DayViewModel[];
+  planId: number;
 }
 
 export function DaysList({ days, planId }: DaysListProps) {
@@ -20,14 +20,10 @@ export function DaysList({ days, planId }: DaysListProps) {
             className="animate-in fade-in slide-in-from-bottom-4 duration-500"
             style={{ animationDelay: `${index * 50}ms` }}
           >
-            <DayCard
-              day={day}
-              planId={planId}
-            />
+            <DayCard day={day} planId={planId} />
           </div>
         ))}
       </div>
     </section>
-  )
+  );
 }
-

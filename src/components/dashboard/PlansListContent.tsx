@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import PlanCard from "./PlanCard";
 import type { PlanListItemVM } from "./types";
 
-type Props = {
+interface Props {
   items: PlanListItemVM[];
   hasActivePlan: boolean;
-};
+}
 
 export default function PlansListContent({ items, hasActivePlan }: Props): JSX.Element {
   if (items.length === 0) {
@@ -21,11 +21,11 @@ export default function PlansListContent({ items, hasActivePlan }: Props): JSX.E
           {hasActivePlan ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button disabled>
-                  Generuj plan
-                </Button>
+                <Button disabled>Generuj plan</Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={4}>użytkownik może mieć tylko jeden aktywny plan</TooltipContent>
+              <TooltipContent side="bottom" sideOffset={4}>
+                użytkownik może mieć tylko jeden aktywny plan
+              </TooltipContent>
             </Tooltip>
           ) : (
             <Button asChild>
@@ -44,5 +44,3 @@ export default function PlansListContent({ items, hasActivePlan }: Props): JSX.E
     </div>
   );
 }
-
-

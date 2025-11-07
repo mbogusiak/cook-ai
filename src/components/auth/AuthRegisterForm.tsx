@@ -1,129 +1,133 @@
-import React from "react"
-import { Mail, Lock } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { registerSchema, type RegisterFormValues } from "@/lib/schemas/auth"
+import React from "react";
+import { Mail, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { registerSchema, type RegisterFormValues } from "@/lib/schemas/auth";
 
-type Props = {
-  onSubmit?: (values: Omit<RegisterFormValues, "confirmPassword">) => Promise<void> | void
-  isSubmitting?: boolean
-  error?: string | null
+interface Props {
+  onSubmit?: (values: Omit<RegisterFormValues, "confirmPassword">) => Promise<void> | void;
+  isSubmitting?: boolean;
+  error?: string | null;
 }
 
-export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting = false, error: externalError }: Props): React.ReactElement {
+export function AuthRegisterForm({
+  onSubmit,
+  isSubmitting: externalIsSubmitting = false,
+  error: externalError,
+}: Props): React.ReactElement {
   const [values, setValues] = React.useState<RegisterFormValues>({
     email: "",
     password: "",
     confirmPassword: "",
-  })
-  const [errors, setErrors] = React.useState<Partial<Record<keyof RegisterFormValues, string>>>({})
-  const [formError, setFormError] = React.useState<string | null>(externalError || null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [registrationSuccess, setRegistrationSuccess] = React.useState(false)
-  const [requiresEmailConfirmation, setRequiresEmailConfirmation] = React.useState(false)
-  const [registeredEmail, setRegisteredEmail] = React.useState<string | null>(null)
+  });
+  const [errors, setErrors] = React.useState<Partial<Record<keyof RegisterFormValues, string>>>({});
+  const [formError, setFormError] = React.useState<string | null>(externalError || null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = React.useState(false);
+  const [requiresEmailConfirmation, setRequiresEmailConfirmation] = React.useState(false);
+  const [registeredEmail, setRegisteredEmail] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setFormError(externalError || null)
-  }, [externalError])
+    setFormError(externalError || null);
+  }, [externalError]);
 
   React.useEffect(() => {
-    setIsSubmitting(externalIsSubmitting)
-  }, [externalIsSubmitting])
+    setIsSubmitting(externalIsSubmitting);
+  }, [externalIsSubmitting]);
 
   function handleFieldChange(field: keyof RegisterFormValues, value: string): void {
-    setValues((prev) => ({ ...prev, [field]: value }))
+    setValues((prev) => ({ ...prev, [field]: value }));
     // Clear field error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
     // Clear form-level error when user starts typing
     if (formError) {
-      setFormError(null)
+      setFormError(null);
     }
     // Clear success state when user starts typing
     if (registrationSuccess) {
-      setRegistrationSuccess(false)
-      setRequiresEmailConfirmation(false)
-      setRegisteredEmail(null)
+      setRegistrationSuccess(false);
+      setRequiresEmailConfirmation(false);
+      setRegisteredEmail(null);
     }
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault()
-    setErrors({})
-    setFormError(null)
-    setRegistrationSuccess(false)
-    setRequiresEmailConfirmation(false)
-    setRegisteredEmail(null)
+    e.preventDefault();
+    setErrors({});
+    setFormError(null);
+    setRegistrationSuccess(false);
+    setRequiresEmailConfirmation(false);
+    setRegisteredEmail(null);
 
-    const result = registerSchema.safeParse(values)
+    const result = registerSchema.safeParse(values);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof RegisterFormValues, string>> = {}
+      const fieldErrors: Partial<Record<keyof RegisterFormValues, string>> = {};
       result.error.errors.forEach((err) => {
         if (err.path[0]) {
-          fieldErrors[err.path[0] as keyof RegisterFormValues] = err.message
+          fieldErrors[err.path[0] as keyof RegisterFormValues] = err.message;
         }
-      })
-      setErrors(fieldErrors)
-      return
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
     // If custom onSubmit is provided, use it
     if (onSubmit) {
       try {
-        const { confirmPassword, ...submitData } = result.data
-        await onSubmit(submitData)
+        const { confirmPassword, ...submitData } = result.data;
+        await onSubmit(submitData);
       } catch (err) {
-        setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas rejestracji")
+        setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas rejestracji");
       }
-      return
+      return;
     }
 
     // Default: call API endpoint
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const { confirmPassword, ...submitData } = result.data
+      const { confirmPassword, ...submitData } = result.data;
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(submitData),
-      })
+      });
 
-      const responseData = await response.json()
+      const responseData = await response.json();
 
       if (!response.ok) {
         // Handle API error
-        const errorMessage = responseData.error || "Wystąpił błąd podczas rejestracji"
-        setFormError(errorMessage)
-        setIsSubmitting(false)
-        return
+        const errorMessage = responseData.error || "Wystąpił błąd podczas rejestracji";
+        setFormError(errorMessage);
+        setIsSubmitting(false);
+        return;
       }
 
       // Success: check if email confirmation is required
-      const requiresConfirmation = responseData.requiresEmailConfirmation || false
-      setRequiresEmailConfirmation(requiresConfirmation)
-      setRegisteredEmail(responseData.user?.email || submitData.email)
-      setRegistrationSuccess(true)
+      const requiresConfirmation = responseData.requiresEmailConfirmation || false;
+      setRequiresEmailConfirmation(requiresConfirmation);
+      setRegisteredEmail(responseData.user?.email || submitData.email);
+      setRegistrationSuccess(true);
 
       if (!requiresConfirmation) {
         // If no email confirmation required, redirect to onboarding
         // (user is automatically logged in by Supabase)
         setTimeout(() => {
-          window.location.href = "/onboarding"
-        }, 1500)
+          window.location.href = "/onboarding";
+        }, 1500);
       }
 
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas rejestracji")
-      setIsSubmitting(false)
+      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas rejestracji");
+      setIsSubmitting(false);
     }
   }
 
-  const submitting = isSubmitting || externalIsSubmitting
+  const submitting = isSubmitting || externalIsSubmitting;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate data-testid="register-form">
@@ -235,41 +239,40 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="register-error">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="text-sm text-destructive text-center"
+          data-testid="register-error"
+        >
           {formError}
         </div>
       )}
 
       {/* Success Message - Email Confirmation Required */}
       {registrationSuccess && requiresEmailConfirmation && (
-        <div 
-          role="alert" 
-          aria-live="polite" 
+        <div
+          role="alert"
+          aria-live="polite"
           className="text-sm text-center p-4 rounded-lg bg-primary/10 border border-primary/20"
         >
-          <p className="font-semibold text-primary mb-2">
-            Rejestracja zakończona powodzeniem!
-          </p>
+          <p className="font-semibold text-primary mb-2">Rejestracja zakończona powodzeniem!</p>
           <p className="text-muted-foreground">
-            Wysłaliśmy link potwierdzający na adres <strong>{registeredEmail}</strong>.
-            Sprawdź swoją skrzynkę pocztową i kliknij link, aby aktywować konto.
+            Wysłaliśmy link potwierdzający na adres <strong>{registeredEmail}</strong>. Sprawdź swoją skrzynkę pocztową
+            i kliknij link, aby aktywować konto.
           </p>
         </div>
       )}
 
       {/* Success Message - No Confirmation Required */}
       {registrationSuccess && !requiresEmailConfirmation && (
-        <div 
-          role="alert" 
-          aria-live="polite" 
+        <div
+          role="alert"
+          aria-live="polite"
           className="text-sm text-center p-4 rounded-lg bg-primary/10 border border-primary/20"
         >
-          <p className="font-semibold text-primary mb-2">
-            Rejestracja zakończona powodzeniem!
-          </p>
-          <p className="text-muted-foreground">
-            Przekierowywanie...
-          </p>
+          <p className="font-semibold text-primary mb-2">Rejestracja zakończona powodzeniem!</p>
+          <p className="text-muted-foreground">Przekierowywanie...</p>
         </div>
       )}
 
@@ -283,6 +286,5 @@ export function AuthRegisterForm({ onSubmit, isSubmitting: externalIsSubmitting 
         {submitting ? "Rejestrowanie..." : registrationSuccess ? "Zarejestrowano" : "Zarejestruj się"}
       </Button>
     </form>
-  )
+  );
 }
-

@@ -6,5 +6,3 @@ export function useActivePlanGuard(vm?: PlansListVM) {
   const getBlockedCtaMessage = () => (hasActivePlan ? "Masz już aktywny plan" : "");
   return useMemo(() => ({ hasActivePlan, getBlockedCtaMessage }), [hasActivePlan]);
 }
-
-

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface CurrentPathInfo {
   path: string;
@@ -8,7 +8,7 @@ interface CurrentPathInfo {
 
 export function useCurrentPath(): CurrentPathInfo {
   const [pathInfo, setPathInfo] = useState<CurrentPathInfo>({
-    path: typeof window !== 'undefined' ? window.location.pathname : '/dashboard'
+    path: typeof window !== "undefined" ? window.location.pathname : "/dashboard",
   });
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export function useCurrentPath(): CurrentPathInfo {
     setPathInfo({
       path,
       planId: planIdMatch ? Number(planIdMatch[1]) : undefined,
-      date: dateMatch ? dateMatch[1] : undefined
+      date: dateMatch ? dateMatch[1] : undefined,
     });
   }, []);
 

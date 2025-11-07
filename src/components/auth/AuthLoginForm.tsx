@@ -1,73 +1,77 @@
-import React from "react"
-import { Mail, Lock } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { loginSchema, type LoginFormValues } from "@/lib/schemas/auth"
+import React from "react";
+import { Mail, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { loginSchema, type LoginFormValues } from "@/lib/schemas/auth";
 
-type Props = {
-  onSubmit?: (values: LoginFormValues) => Promise<void> | void
-  isSubmitting?: boolean
-  error?: string | null
+interface Props {
+  onSubmit?: (values: LoginFormValues) => Promise<void> | void;
+  isSubmitting?: boolean;
+  error?: string | null;
 }
 
-export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = false, error: externalError }: Props): React.ReactElement {
+export function AuthLoginForm({
+  onSubmit,
+  isSubmitting: externalIsSubmitting = false,
+  error: externalError,
+}: Props): React.ReactElement {
   const [values, setValues] = React.useState<LoginFormValues>({
     email: "",
     password: "",
-  })
-  const [errors, setErrors] = React.useState<Partial<Record<keyof LoginFormValues, string>>>({})
-  const [formError, setFormError] = React.useState<string | null>(externalError || null)
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
+  });
+  const [errors, setErrors] = React.useState<Partial<Record<keyof LoginFormValues, string>>>({});
+  const [formError, setFormError] = React.useState<string | null>(externalError || null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   React.useEffect(() => {
-    setFormError(externalError || null)
-  }, [externalError])
+    setFormError(externalError || null);
+  }, [externalError]);
 
   React.useEffect(() => {
-    setIsSubmitting(externalIsSubmitting)
-  }, [externalIsSubmitting])
+    setIsSubmitting(externalIsSubmitting);
+  }, [externalIsSubmitting]);
 
   function handleFieldChange(field: keyof LoginFormValues, value: string): void {
-    setValues((prev) => ({ ...prev, [field]: value }))
+    setValues((prev) => ({ ...prev, [field]: value }));
     // Clear field error when user starts typing
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
     // Clear form-level error when user starts typing
     if (formError) {
-      setFormError(null)
+      setFormError(null);
     }
   }
 
   async function handleSubmit(e: React.FormEvent): Promise<void> {
-    e.preventDefault()
-    setErrors({})
-    setFormError(null)
+    e.preventDefault();
+    setErrors({});
+    setFormError(null);
 
-    const result = loginSchema.safeParse(values)
+    const result = loginSchema.safeParse(values);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof LoginFormValues, string>> = {}
+      const fieldErrors: Partial<Record<keyof LoginFormValues, string>> = {};
       result.error.errors.forEach((err) => {
         if (err.path[0]) {
-          fieldErrors[err.path[0] as keyof LoginFormValues] = err.message
+          fieldErrors[err.path[0] as keyof LoginFormValues] = err.message;
         }
-      })
-      setErrors(fieldErrors)
-      return
+      });
+      setErrors(fieldErrors);
+      return;
     }
 
     // If custom onSubmit is provided, use it
     if (onSubmit) {
       try {
-        await onSubmit(result.data)
+        await onSubmit(result.data);
       } catch (err) {
-        setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas logowania")
+        setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas logowania");
       }
-      return
+      return;
     }
 
     // Default: call API endpoint
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -75,57 +79,57 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
           "Content-Type": "application/json",
         },
         body: JSON.stringify(result.data),
-      })
+      });
 
-      const responseData = await response.json()
+      const responseData = await response.json();
 
       if (!response.ok) {
         // Handle API error
-        const errorMessage = responseData.error || "Wystąpił błąd podczas logowania"
-        setFormError(errorMessage)
-        setIsSubmitting(false)
-        return
+        const errorMessage = responseData.error || "Wystąpił błąd podczas logowania";
+        setFormError(errorMessage);
+        setIsSubmitting(false);
+        return;
       }
 
       // Success: determine redirect destination
-      const urlParams = new URLSearchParams(window.location.search)
-      const nextParam = urlParams.get("next")
+      const urlParams = new URLSearchParams(window.location.search);
+      const nextParam = urlParams.get("next");
 
       if (nextParam) {
         // Redirect to next parameter
-        window.location.href = decodeURIComponent(nextParam)
-        return
+        window.location.href = decodeURIComponent(nextParam);
+        return;
       }
 
       // Check if user has active plan (client-side fallback)
       // SSR guard in login.astro should handle this, but we provide fallback
       try {
-        const plansResponse = await fetch("/api/plans?state=active&limit=1")
+        const plansResponse = await fetch("/api/plans?state=active&limit=1");
         if (plansResponse.ok) {
-          const plansData = await plansResponse.json()
-          const hasActivePlan = plansData.has_active_plan || (plansData.data && plansData.data.length > 0)
+          const plansData = await plansResponse.json();
+          const hasActivePlan = plansData.has_active_plan || (plansData.data && plansData.data.length > 0);
 
           if (hasActivePlan) {
-            window.location.href = "/dashboard"
+            window.location.href = "/dashboard";
           } else {
-            window.location.href = "/onboarding"
+            window.location.href = "/onboarding";
           }
         } else {
           // Fallback to onboarding if check fails
-          window.location.href = "/onboarding"
+          window.location.href = "/onboarding";
         }
       } catch (checkError) {
         // Fallback to onboarding on error
-        console.error("Error checking active plan:", checkError)
-        window.location.href = "/onboarding"
+        console.error("Error checking active plan:", checkError);
+        window.location.href = "/onboarding";
       }
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas logowania")
-      setIsSubmitting(false)
+      setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas logowania");
+      setIsSubmitting(false);
     }
   }
 
-  const submitting = isSubmitting || externalIsSubmitting
+  const submitting = isSubmitting || externalIsSubmitting;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate data-testid="login-form">
@@ -202,21 +206,20 @@ export function AuthLoginForm({ onSubmit, isSubmitting: externalIsSubmitting = f
 
       {/* Form-level Error */}
       {formError && (
-        <div role="alert" aria-live="assertive" className="text-sm text-destructive text-center" data-testid="login-error">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="text-sm text-destructive text-center"
+          data-testid="login-error"
+        >
           {formError}
         </div>
       )}
 
       {/* Submit Button */}
-      <Button
-        type="submit"
-        disabled={submitting}
-        className="w-full h-12 text-base"
-        data-testid="login-submit"
-      >
+      <Button type="submit" disabled={submitting} className="w-full h-12 text-base" data-testid="login-submit">
         {submitting ? "Logowanie..." : "Zaloguj się"}
       </Button>
     </form>
-  )
+  );
 }
-

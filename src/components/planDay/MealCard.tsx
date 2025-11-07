@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import type { MealViewModel } from './types';
-import { Button } from '@/components/ui/button';
-import { useUpdateMealStatus } from './hooks';
-import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, ArrowRightLeft } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import type { MealViewModel } from "./types";
+import { Button } from "@/components/ui/button";
+import { useUpdateMealStatus } from "./hooks";
+import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, ArrowRightLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MealCardProps {
   meal: MealViewModel;
@@ -15,9 +15,9 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
   const { mutate: updateStatus, isPending } = useUpdateMealStatus();
   const [showIngredients, setShowIngredients] = useState(true);
 
-  const handleStatusChange = (status: 'completed' | 'skipped') => {
+  const handleStatusChange = (status: "completed" | "skipped") => {
     if (meal.status === status) {
-      updateStatus({ mealId: meal.id, status: 'planned' });
+      updateStatus({ mealId: meal.id, status: "planned" });
     } else {
       updateStatus({ mealId: meal.id, status });
     }
@@ -26,21 +26,35 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
   return (
     <div
       className={cn(
-      "border rounded-lg overflow-hidden transition-all flex flex-col h-full",
-      meal.status === 'completed' && "border-success bg-success/10",
-      meal.status === 'skipped' && "border-destructive bg-destructive/10 opacity-60",
-      isPending && "opacity-50 cursor-not-allowed"
-    )}
+        "border rounded-lg overflow-hidden transition-all flex flex-col h-full",
+        meal.status === "completed" && "border-success bg-success/10",
+        meal.status === "skipped" && "border-destructive bg-destructive/10 opacity-60",
+        isPending && "opacity-50 cursor-not-allowed"
+      )}
       data-testid={`meal-card-${meal.slot}`}
     >
       <div className="relative flex-shrink-0">
-        <img src={meal.imageUrl || '/placeholder.svg'} alt={meal.name} className="w-full h-32 object-cover" />
+        <img src={meal.imageUrl || "/placeholder.svg"} alt={meal.name} className="w-full h-32 object-cover" />
         <div className="absolute top-2 right-2 flex gap-2 bg-white/70 backdrop-blur-sm rounded-full p-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange('completed')} disabled={isPending} data-testid="meal-complete">
-            {meal.status === 'completed' ? <CheckCircle2 className="text-success" /> : <CheckCircle2 />}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleStatusChange("completed")}
+            disabled={isPending}
+            data-testid="meal-complete"
+          >
+            {meal.status === "completed" ? <CheckCircle2 className="text-success" /> : <CheckCircle2 />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleStatusChange('skipped')} disabled={isPending} data-testid="meal-skip">
-            {meal.status === 'skipped' ? <XCircle className="text-destructive" /> : <XCircle />}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => handleStatusChange("skipped")}
+            disabled={isPending}
+            data-testid="meal-skip"
+          >
+            {meal.status === "skipped" ? <XCircle className="text-destructive" /> : <XCircle />}
           </Button>
         </div>
       </div>
@@ -56,7 +70,13 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
         {meal.multiPortionText && (
           <p
             className="text-sm text-info mt-2"
-            data-testid={meal.isMultiPortionCookDay ? 'multiportion-badge' : meal.isMultiPortionLeftoverDay ? 'leftovers-badge' : undefined}
+            data-testid={
+              meal.isMultiPortionCookDay
+                ? "multiportion-badge"
+                : meal.isMultiPortionLeftoverDay
+                  ? "leftovers-badge"
+                  : undefined
+            }
           >
             {meal.multiPortionText}
           </p>
@@ -90,14 +110,14 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
             size="sm"
             className="flex-1"
             onClick={() => onPreview(meal)}
-            disabled={isPending || meal.status !== 'planned'}
+            disabled={isPending || meal.status !== "planned"}
           >
             Ugotuj
           </Button>
           <Button
             size="sm"
             className="flex-1 bg-warning hover:bg-warning/80 text-warning-foreground"
-            disabled={isPending || meal.status !== 'planned'}
+            disabled={isPending || meal.status !== "planned"}
             onClick={() => onSwap(meal)}
             data-testid="meal-swap"
           >
@@ -105,7 +125,9 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onSwap, onPreview }) =
             Wymień
           </Button>
         </div>
-        <span className="sr-only" data-testid="meal-status">{meal.status}</span>
+        <span className="sr-only" data-testid="meal-status">
+          {meal.status}
+        </span>
       </div>
     </div>
   );

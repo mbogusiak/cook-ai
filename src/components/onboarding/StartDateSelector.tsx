@@ -1,52 +1,52 @@
-import React from "react"
+import React from "react";
 
-type Props = {
-  value: string
-  error?: string
-  onChange: (isoDate: string) => void
+interface Props {
+  value: string;
+  error?: string;
+  onChange: (isoDate: string) => void;
 }
 
 function formatISO(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 function getNextMonday(from: Date): Date {
-  const date = new Date(from)
-  const day = date.getDay() // 0..6, Sun..Sat
-  const delta = (8 - (day || 7)) % 7
-  date.setDate(date.getDate() + (delta === 0 ? 7 : delta))
-  return date
+  const date = new Date(from);
+  const day = date.getDay(); // 0..6, Sun..Sat
+  const delta = (8 - (day || 7)) % 7;
+  date.setDate(date.getDate() + (delta === 0 ? 7 : delta));
+  return date;
 }
 
 function formatDateDisplay(isoDate: string): string {
-  if (!isoDate) return "—"
-  const date = new Date(isoDate + "T00:00:00")
+  if (!isoDate) return "—";
+  const date = new Date(isoDate + "T00:00:00");
   return date.toLocaleDateString("pl-PL", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-  })
+  });
 }
 
 export function StartDateSelector({ value, onChange, error }: Props): React.ReactElement {
-  const [mode, setMode] = React.useState<"today" | "tomorrow" | "next_monday" | "custom">("next_monday")
-  const [customDate, setCustomDate] = React.useState<string>("")
+  const [mode, setMode] = React.useState<"today" | "tomorrow" | "next_monday" | "custom">("next_monday");
+  const [customDate, setCustomDate] = React.useState<string>("");
 
   React.useEffect(() => {
-    const today = new Date()
-    if (mode === "today") onChange(formatISO(today))
+    const today = new Date();
+    if (mode === "today") onChange(formatISO(today));
     if (mode === "tomorrow") {
-      const d = new Date(today)
-      d.setDate(d.getDate() + 1)
-      onChange(formatISO(d))
+      const d = new Date(today);
+      d.setDate(d.getDate() + 1);
+      onChange(formatISO(d));
     }
-    if (mode === "next_monday") onChange(formatISO(getNextMonday(today)))
-    if (mode === "custom" && customDate) onChange(customDate)
-  }, [mode, customDate, onChange])
+    if (mode === "next_monday") onChange(formatISO(getNextMonday(today)));
+    if (mode === "custom" && customDate) onChange(customDate);
+  }, [mode, customDate, onChange]);
 
   return (
     <div className="space-y-6">
@@ -58,9 +58,7 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
           <label className="block cursor-pointer">
             <div
               className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
-                mode === "today"
-                  ? "bg-orange-50 border-orange-500"
-                  : "bg-white border-gray-200 hover:border-gray-300"
+                mode === "today" ? "bg-orange-50 border-orange-500" : "bg-white border-gray-200 hover:border-gray-300"
               }`}
             >
               <input
@@ -126,9 +124,7 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
           <label className="block cursor-pointer">
             <div
               className={`flex items-center px-4 py-3 rounded-xl border transition-all ${
-                mode === "custom"
-                  ? "bg-orange-50 border-orange-500"
-                  : "bg-white border-gray-200 hover:border-gray-300"
+                mode === "custom" ? "bg-orange-50 border-orange-500" : "bg-white border-gray-200 hover:border-gray-300"
               }`}
             >
               <input
@@ -167,7 +163,5 @@ export function StartDateSelector({ value, onChange, error }: Props): React.Reac
 
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
-  )
+  );
 }
-
-

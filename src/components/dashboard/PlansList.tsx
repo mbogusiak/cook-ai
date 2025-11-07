@@ -31,11 +31,11 @@ export default function PlansList(): JSX.Element {
             {hasActivePlan ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button disabled>
-                    Generuj plan
-                  </Button>
+                  <Button disabled>Generuj plan</Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" sideOffset={4}>użytkownik może mieć tylko jeden aktywny plan</TooltipContent>
+                <TooltipContent side="bottom" sideOffset={4}>
+                  użytkownik może mieć tylko jeden aktywny plan
+                </TooltipContent>
               </Tooltip>
             ) : (
               <Button asChild>
@@ -75,11 +75,11 @@ export default function PlansList(): JSX.Element {
           {vm.hasActivePlan ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button disabled>
-                  Generuj plan
-                </Button>
+                <Button disabled>Generuj plan</Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" sideOffset={4}>użytkownik może mieć tylko jeden aktywny plan</TooltipContent>
+              <TooltipContent side="bottom" sideOffset={4}>
+                użytkownik może mieć tylko jeden aktywny plan
+              </TooltipContent>
             </Tooltip>
           ) : (
             <Button asChild>
@@ -95,5 +95,3 @@ export default function PlansList(): JSX.Element {
     </div>
   );
 }
-
-

@@ -118,7 +118,7 @@ function transformRecipe(cookidoRecipe: CookidoRecipe): RecipeInsert {
 /**
  * Load recipes from JSON file and insert into database
  */
-async function loadRecipes(filePath: string, batchSize: number = 100) {
+async function loadRecipes(filePath: string, batchSize = 100) {
   try {
     console.log(`📖 Reading recipes from ${filePath}...`);
 
@@ -159,15 +159,13 @@ async function loadRecipes(filePath: string, batchSize: number = 100) {
         }
 
         insertedCount += insertedRecipes.length;
-        console.log(
-          `✅ Batch ${batchNum}: Inserted ${insertedRecipes.length} recipes`
-        );
+        console.log(`✅ Batch ${batchNum}: Inserted ${insertedRecipes.length} recipes`);
 
         // Insert recipe slots
-        const recipeSlots: Array<{
+        const recipeSlots: {
           recipe_id: number;
           slot: string;
-        }> = [];
+        }[] = [];
 
         for (let j = 0; j < batch.length; j++) {
           const recipe = batch[j];
@@ -187,9 +185,7 @@ async function loadRecipes(filePath: string, batchSize: number = 100) {
         }
 
         if (recipeSlots.length > 0) {
-          const { error: slotsError } = await supabase
-            .from("recipe_slots")
-            .insert(recipeSlots);
+          const { error: slotsError } = await supabase.from("recipe_slots").insert(recipeSlots);
 
           if (slotsError) {
             console.error(`⚠️  Batch ${batchNum} slots error:`, slotsError.message);

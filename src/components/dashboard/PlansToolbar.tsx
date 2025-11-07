@@ -1,18 +1,18 @@
 import { Badge } from "@/components/ui/badge";
 import type { PlanStateFilter } from "./types";
 
-type Props = {
+interface Props {
   state: PlanStateFilter;
   total: number;
   onStateChange: (s: PlanStateFilter) => void;
-};
+}
 
 export default function PlansToolbar({ state, total, onStateChange }: Props): JSX.Element {
-  const filterOptions: Array<{ value: PlanStateFilter; label: string }> = [
+  const filterOptions: { value: PlanStateFilter; label: string }[] = [
     { value: "all", label: "Wszystkie" },
     { value: "active", label: "Aktywne" },
     { value: "archived", label: "Archiwalne" },
-    { value: "cancelled", label: "Anulowane" }
+    { value: "cancelled", label: "Anulowane" },
   ];
 
   return (
@@ -41,5 +41,3 @@ export default function PlansToolbar({ state, total, onStateChange }: Props): JS
     </div>
   );
 }
-
-

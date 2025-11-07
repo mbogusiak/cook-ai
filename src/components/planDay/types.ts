@@ -16,7 +16,7 @@ export interface PlanDayViewModel {
 
 // ViewModel dla pojedynczego slotu
 export interface MealSlotViewModel {
-  slot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  slot: "breakfast" | "lunch" | "dinner" | "snack";
   targetCalories: number;
   meal: MealViewModel | null; // Slot może być pusty
 }
@@ -24,8 +24,8 @@ export interface MealSlotViewModel {
 // ViewModel dla pojedynczego posiłku
 export interface MealViewModel {
   id: number;
-  status: 'planned' | 'completed' | 'skipped';
-  slot: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  status: "planned" | "completed" | "skipped";
+  slot: "breakfast" | "lunch" | "dinner" | "snack";
   recipeId: number;
   name: string;
   imageUrl: string | null;
@@ -39,5 +39,5 @@ export interface MealViewModel {
   // Pola do logiki posiłków wieloporcjowych
   isMultiPortionCookDay: boolean; // Czy to dzień gotowania na zapas?
   isMultiPortionLeftoverDay: boolean; // Czy to dzień jedzenia resztek?
-  multiPortionText: 'Ugotuj na 2 dni' | 'Resztki z wczoraj' | null;
+  multiPortionText: "Ugotuj na 2 dni" | "Resztki z wczoraj" | null;
 }

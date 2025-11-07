@@ -39,7 +39,7 @@ function escapeSql(str) {
  */
 function toSqlArray(arr) {
   if (!arr || arr.length === 0) return "'{}'::text[]";
-  const escaped = arr.map(item => `E'${escapeSql(item)}'`).join(",");
+  const escaped = arr.map((item) => `E'${escapeSql(item)}'`).join(",");
   return `ARRAY[${escaped}]::text[]`;
 }
 

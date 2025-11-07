@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { getSupabaseBrowserClient } from '@/db/supabase.browser.client';
-import type { User } from '@supabase/supabase-js';
+import { useEffect, useState } from "react";
+import { getSupabaseBrowserClient } from "@/db/supabase.browser.client";
+import type { User } from "@supabase/supabase-js";
 
 interface UseAuthReturn {
   user: User | null;
@@ -23,7 +23,7 @@ export function useAuth(): UseAuthReturn {
         } = await supabase.auth.getUser();
         setCurrentUser(user);
       } catch (error) {
-        console.error('Error getting user session:', error);
+        console.error("Error getting user session:", error);
         setCurrentUser(null);
       } finally {
         setIsLoading(false);
@@ -48,27 +48,27 @@ export function useAuth(): UseAuthReturn {
   const signOut = async () => {
     try {
       // Call server endpoint to properly clear session cookies
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to logout');
+        throw new Error("Failed to logout");
       }
 
       // Clear local state
       setCurrentUser(null);
 
       // Redirect to home page after successful logout
-      window.location.href = '/';
+      window.location.href = "/";
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
       // Still try to redirect even if there's an error
       setCurrentUser(null);
-      window.location.href = '/';
+      window.location.href = "/";
       throw error;
     }
   };
@@ -79,4 +79,3 @@ export function useAuth(): UseAuthReturn {
     signOut,
   };
 }
-

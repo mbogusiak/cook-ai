@@ -1,14 +1,14 @@
-import { User, LogOut, ChefHat } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { User, LogOut, ChefHat } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Breadcrumbs } from './Breadcrumbs';
-import { useCurrentPath } from './hooks/useCurrentPath';
-import { useAuth } from './hooks/useAuth';
+} from "@/components/ui/dropdown-menu";
+import { Breadcrumbs } from "./Breadcrumbs";
+import { useCurrentPath } from "./hooks/useCurrentPath";
+import { useAuth } from "./hooks/useAuth";
 
 interface HeaderProps {
   user?: {
@@ -23,20 +23,20 @@ export function Header({ user: initialUser }: HeaderProps): JSX.Element {
 
   // Use client-side user from hook if available, otherwise fall back to initial user from SSR
   const user = currentUser || (initialUser ? { id: initialUser.id, email: initialUser.email || undefined } : null);
-  const userName = user?.email || 'Użytkownik';
+  const userName = user?.email || "Użytkownik";
 
   const handleLogout = async () => {
     try {
       await signOut();
       // signOut already handles redirect to /
     } catch (error) {
-      console.error('Failed to logout:', error);
+      console.error("Failed to logout:", error);
     }
   };
 
   const handleShowProfile = () => {
     // TODO: Navigate to profile page
-    console.log('Show profile clicked');
+    console.log("Show profile clicked");
   };
 
   // Show login/register buttons if not logged in
@@ -124,19 +124,12 @@ export function Header({ user: initialUser }: HeaderProps): JSX.Element {
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full flex-shrink-0"
-              aria-label="Menu użytkownika"
-            >
+            <Button variant="ghost" size="icon" className="rounded-full flex-shrink-0" aria-label="Menu użytkownika">
               <User className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <div className="px-2 py-1.5 text-sm font-semibold text-foreground mb-2">
-              {userName}
-            </div>
+            <div className="px-2 py-1.5 text-sm font-semibold text-foreground mb-2">{userName}</div>
             <DropdownMenuItem onClick={handleShowProfile}>
               <User className="mr-2 h-4 w-4" />
               Pokaż profil

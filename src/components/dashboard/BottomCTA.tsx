@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-type Props = {
+interface Props {
   hasActivePlan: boolean;
-};
+}
 
 export default function BottomCTA({ hasActivePlan }: Props): JSX.Element {
   return (
@@ -15,7 +15,9 @@ export default function BottomCTA({ hasActivePlan }: Props): JSX.Element {
               Generuj plan
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="top" sideOffset={4}>użytkownik może mieć tylko jeden aktywny plan</TooltipContent>
+          <TooltipContent side="top" sideOffset={4}>
+            użytkownik może mieć tylko jeden aktywny plan
+          </TooltipContent>
         </Tooltip>
       ) : (
         <Button asChild className="w-full">
@@ -25,5 +27,3 @@ export default function BottomCTA({ hasActivePlan }: Props): JSX.Element {
     </div>
   );
 }
-
-

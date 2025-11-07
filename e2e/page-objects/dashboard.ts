@@ -1,14 +1,14 @@
-import { Locator, expect } from '@playwright/test';
-import { BasePage } from './base';
+import { Locator, expect } from "@playwright/test";
+import { BasePage } from "./base";
 
 export class DashboardPage extends BasePage {
   async open(): Promise<void> {
-    await this.goto('/dashboard');
-    await this.expectVisible(this.getByTestId('plans-list'));
+    await this.goto("/dashboard");
+    await this.expectVisible(this.getByTestId("plans-list"));
   }
 
   get planCards(): Locator {
-    return this.getByTestId('plan-card');
+    return this.getByTestId("plan-card");
   }
 
   async openFirstPlan(): Promise<void> {
@@ -16,6 +16,3 @@ export class DashboardPage extends BasePage {
     await this.planCards.first().click();
   }
 }
-
-
-

@@ -1,4 +1,4 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from "@playwright/test";
 
 export class BasePage {
   readonly page: Page;
@@ -19,6 +19,3 @@ export class BasePage {
     await expect(locator).toBeVisible();
   }
 }
-
-
-

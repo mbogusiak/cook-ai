@@ -1,4 +1,6 @@
-type Props = { count?: number };
+interface Props {
+  count?: number;
+}
 
 export default function SkeletonList({ count = 6 }: Props): JSX.Element {
   return (
@@ -9,5 +11,3 @@ export default function SkeletonList({ count = 6 }: Props): JSX.Element {
     </div>
   );
 }
-
-

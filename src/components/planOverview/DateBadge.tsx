@@ -2,15 +2,15 @@
  * Badge representing a single day in calendar strip
  */
 
-import { CheckCircle } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { formatDay } from './dateUtils'
+import { CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { formatDay } from "./dateUtils";
 
 interface DateBadgeProps {
-  date: string
-  dayOfWeek: string
-  isCompleted: boolean
-  onClick: () => void
+  date: string;
+  dayOfWeek: string;
+  isCompleted: boolean;
+  onClick: () => void;
 }
 
 export function DateBadge({ date, dayOfWeek, isCompleted, onClick }: DateBadgeProps) {
@@ -29,16 +29,9 @@ export function DateBadge({ date, dayOfWeek, isCompleted, onClick }: DateBadgePr
         isCompleted && "border-success bg-success/10 hover:bg-success/20"
       )}
     >
-      <span className="text-xs text-muted-foreground capitalize">
-        {dayOfWeek.substring(0, 3)}
-      </span>
-      <span className="text-lg font-semibold">
-        {formatDay(date)}
-      </span>
-      {isCompleted && (
-        <CheckCircle className="h-4 w-4 text-green-500 mt-1" />
-      )}
+      <span className="text-xs text-muted-foreground capitalize">{dayOfWeek.substring(0, 3)}</span>
+      <span className="text-lg font-semibold">{formatDay(date)}</span>
+      {isCompleted && <CheckCircle className="h-4 w-4 text-green-500 mt-1" />}
     </button>
-  )
+  );
 }
-

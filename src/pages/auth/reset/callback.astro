@@ -21,36 +21,23 @@ import { AuthResetConfirmForm } from "../../../components/auth/AuthResetConfirmF
             stroke-linejoin="round"
             class="text-primary"
           >
-            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
         </div>
       </div>
 
       {/* Title */}
       <h1 class="text-4xl font-bold text-center mb-2">Ustaw nowe hasło</h1>
-      <p class="text-center text-muted-foreground mb-8">
-        Wprowadź nowe hasło dla swojego konta
-      </p>
+      <p class="text-center text-muted-foreground mb-8">Wprowadź nowe hasło dla swojego konta</p>
 
       {/* Form */}
       <AuthResetConfirmForm client:load />
 
       {/* Link to Login */}
       <div class="mt-6 text-center">
-        <a
-          href="/auth/login"
-          class="text-sm text-primary underline hover:text-primary/80"
-        >
-          Wróć do logowania
-        </a>
+        <a href="/auth/login" class="text-sm text-primary underline hover:text-primary/80"> Wróć do logowania </a>
       </div>
     </div>
   </div>
 </Layout>
-
-
-
-
-
-

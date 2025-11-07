@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import type { PaginationState } from "./types";
 
-type Props = {
+interface Props {
   pagination: PaginationState;
   onChange: (nextPage: number) => void;
-};
+}
 
 export default function PaginationControls({ pagination, onChange }: Props): JSX.Element {
   const canPrev = pagination.currentPage > 1;
@@ -23,5 +23,3 @@ export default function PaginationControls({ pagination, onChange }: Props): JSX
     </div>
   );
 }
-
-

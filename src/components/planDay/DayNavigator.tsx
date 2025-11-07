@@ -1,8 +1,8 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addDays, subDays, isSameDay } from 'date-fns';
-import { pl } from 'date-fns/locale';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { format, addDays, subDays, isSameDay } from "date-fns";
+import { pl } from "date-fns/locale";
 
 interface DayNavigatorProps {
   currentDate: string;
@@ -11,12 +11,7 @@ interface DayNavigatorProps {
   planId: number;
 }
 
-export const DayNavigator: React.FC<DayNavigatorProps> = ({
-  currentDate,
-  planStartDate,
-  planEndDate,
-  planId,
-}) => {
+export const DayNavigator: React.FC<DayNavigatorProps> = ({ currentDate, planStartDate, planEndDate, planId }) => {
   const current = new Date(currentDate);
   const start = new Date(planStartDate);
   const end = new Date(planEndDate);
@@ -27,8 +22,8 @@ export const DayNavigator: React.FC<DayNavigatorProps> = ({
   const prevDay = subDays(current, 1);
   const nextDay = addDays(current, 1);
 
-  const prevDayString = format(prevDay, 'yyyy-MM-dd');
-  const nextDayString = format(nextDay, 'yyyy-MM-dd');
+  const prevDayString = format(prevDay, "yyyy-MM-dd");
+  const nextDayString = format(nextDay, "yyyy-MM-dd");
 
   const handleNavigate = (date: string) => {
     window.location.href = `/plans/${planId}/days/${date}`;
@@ -47,8 +42,8 @@ export const DayNavigator: React.FC<DayNavigatorProps> = ({
         <ChevronLeft className="h-4 w-4" />
       </Button>
       <div className="text-center">
-        <h2 className="text-2xl font-bold">{format(current, 'EEEE', { locale: pl })}</h2>
-        <p className="text-muted-foreground">{format(current, 'd MMMM yyyy', { locale: pl })}</p>
+        <h2 className="text-2xl font-bold">{format(current, "EEEE", { locale: pl })}</h2>
+        <p className="text-muted-foreground">{format(current, "d MMMM yyyy", { locale: pl })}</p>
       </div>
       <Button
         variant="outline"

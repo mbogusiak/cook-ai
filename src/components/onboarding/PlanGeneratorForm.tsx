@@ -1,24 +1,24 @@
-import React from "react"
-import { Flame, Calendar } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import React from "react";
+import { Flame, Calendar } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
-export type OnboardingFormValues = {
-  daily_calories: number
-  plan_length_days: number
-  start_date: string
+export interface OnboardingFormValues {
+  daily_calories: number;
+  plan_length_days: number;
+  start_date: string;
 }
 
-export type OnboardingFormErrors = {
-  daily_calories?: string
-  plan_length_days?: string
-  start_date?: string
+export interface OnboardingFormErrors {
+  daily_calories?: string;
+  plan_length_days?: string;
+  start_date?: string;
 }
 
-type Props = {
-  values: OnboardingFormValues
-  errors: OnboardingFormErrors
-  isSubmitting?: boolean
-  onFieldChange: (name: keyof OnboardingFormValues, value: string | number) => void
+interface Props {
+  values: OnboardingFormValues;
+  errors: OnboardingFormErrors;
+  isSubmitting?: boolean;
+  onFieldChange: (name: keyof OnboardingFormValues, value: string | number) => void;
 }
 
 export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting }: Props): React.ReactElement {
@@ -100,7 +100,5 @@ export function PlanGeneratorForm({ values, errors, onFieldChange, isSubmitting 
         </div>
       </div>
     </form>
-  )
+  );
 }
-
-
