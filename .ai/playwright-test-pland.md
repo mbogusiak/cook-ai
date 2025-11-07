@@ -188,8 +188,8 @@ Todos:
 [x] Create Page Objects under e2e/page-objects for main pages/modals
 [x] Tune playwright.config.ts for Chromium-only, artifacts, webServer, baseURL
 [x] Implement test data seeding and optional test reset API route
-[] Write auth specs for register, login, logout, password reset
-[] Write onboarding and plan generation specs including kcal splits
+[x] Write auth specs for register, login, logout, password reset
+[x] Write onboarding and plan generation specs including kcal splits
 [] Write daily view and navigation specs with recipe links
 [] Write complete/skip + autosave persistence specs
 [] Write swap specs with alternatives and persistence
