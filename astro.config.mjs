@@ -11,6 +11,9 @@ export default defineConfig({
   output: "server",
   integrations: [react(), sitemap()],
   server: { port: 3000 },
+  adapter: cloudflare({
+    mode: "advanced",
+  }),
   vite: {
     plugins: [tailwindcss()],
     resolve: {
@@ -18,8 +21,10 @@ export default defineConfig({
         "@": "/src",
       },
     },
+    ssr: {
+      external: ["node:buffer", "node:util"],
+    },
   },
-  adapter: cloudflare(),
   env: {
     schema: {
       // Public client variables (accessible in browser)
