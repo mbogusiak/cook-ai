@@ -1,10 +1,53 @@
 // @ts-check
 import { defineConfig, envField } from "astro/config";
+import fs from "fs";
+import path from "path";
 
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
+
+// Helper to inject polyfills into the worker
+function injectPolyfills() {
+  return {
+    name: "inject-cloudflare-polyfills",
+    apply: "build",
+    enforce: "post",
+    async writeBundle() {
+      try {
+        const workerPath = path.join(process.cwd(), "dist/_worker.js/index.js");
+        if (fs.existsSync(workerPath)) {
+          let content = fs.readFileSync(workerPath, "utf-8");
+
+          // Skip if already injected
+          if (content.includes("// MessageChannel polyfill for React 19 compatibility")) {
+            return;
+          }
+
+          // Add polyfill at the very beginning, before any imports
+          const polyfill = `// MessageChannel polyfill for React 19 compatibility
+if (typeof globalThis !== "undefined" && !globalThis.MessageChannel) {
+  globalThis.MessageChannel = class MessageChannel {
+    constructor() {
+      this.port1 = { postMessage() {}, onmessage: null, start() {}, close() {} };
+      this.port2 = { postMessage() {}, onmessage: null, start() {}, close() {} };
+    }
+  };
+}
+
+`;
+
+          content = polyfill + content;
+          fs.writeFileSync(workerPath, content);
+          console.log("✓ Injected MessageChannel polyfill into worker");
+        }
+      } catch (err) {
+        console.error("Failed to inject polyfills:", err);
+      }
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,7 +61,7 @@ export default defineConfig({
     },
   }),
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), injectPolyfills()],
     resolve: {
       alias: {
         "@": "/src",
