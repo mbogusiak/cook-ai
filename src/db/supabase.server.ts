@@ -1,5 +1,6 @@
 import type { AstroCookies } from "astro";
 import { createServerClient, type CookieOptionsWithName } from "@supabase/ssr";
+import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
 import type { Database } from "../db/database.types.ts";
 
 export const cookieOptions: CookieOptionsWithName = {
@@ -18,8 +19,8 @@ function parseCookieHeader(cookieHeader: string): { name: string; value: string 
 }
 
 export function createSupabaseServerInstance(context: { headers: Headers; cookies: AstroCookies }) {
-  const supabaseUrl = import.meta.env.SUPABASE_URL;
-  const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
+  const supabaseUrl = SUPABASE_URL;
+  const supabaseAnonKey = SUPABASE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Missing Supabase environment variables");

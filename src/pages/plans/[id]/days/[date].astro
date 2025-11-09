@@ -1,12 +1,13 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { PlanDayPage } from "@/components/planDay/PlanDayPage";
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY } from "astro:env/client";
 
 const { id, date } = Astro.params;
 const planId = Number(id);
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseKey = import.meta.env.PUBLIC_SUPABASE_KEY;
+const supabaseUrl = PUBLIC_SUPABASE_URL;
+const supabaseKey = PUBLIC_SUPABASE_KEY;
 ---
 
 <Layout title="Plan Day">
