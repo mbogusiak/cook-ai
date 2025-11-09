@@ -1,5 +1,5 @@
 name = "meal-flow"
-main = "wrangler-worker.js"
+main = "dist/_worker.js/index.js"
 site = { bucket = "dist" }
 build = { command = "npm run build", cwd = "." }
 compatibility_date = "2025-01-01"

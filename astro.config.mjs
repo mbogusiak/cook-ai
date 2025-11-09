@@ -8,25 +8,9 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
 
-// Helper to inject polyfills into the worker
+// Helper to inject polyfills into the worker and chunks
 function injectPolyfills() {
-  return {
-    name: "inject-cloudflare-polyfills",
-    apply: "build",
-    enforce: "post",
-    async writeBundle() {
-      try {
-        const workerPath = path.join(process.cwd(), "dist/_worker.js/index.js");
-        if (fs.existsSync(workerPath)) {
-          let content = fs.readFileSync(workerPath, "utf-8");
-
-          // Skip if already injected
-          if (content.includes("// MessageChannel polyfill for React 19 compatibility")) {
-            return;
-          }
-
-          // Add polyfill at the very beginning, before any imports
-          const polyfill = `// MessageChannel polyfill for React 19 compatibility
+  const polyfill = `// MessageChannel polyfill for React 19 compatibility
 if (typeof globalThis !== "undefined" && !globalThis.MessageChannel) {
   globalThis.MessageChannel = class MessageChannel {
     constructor() {
@@ -35,13 +19,64 @@ if (typeof globalThis !== "undefined" && !globalThis.MessageChannel) {
     }
   };
 }
-
 `;
 
-          content = polyfill + content;
-          fs.writeFileSync(workerPath, content);
-          console.log("✓ Injected MessageChannel polyfill into worker");
+  return {
+    name: "inject-cloudflare-polyfills",
+    apply: "build",
+    enforce: "post",
+    async writeBundle(options) {
+      try {
+        const workerDir = path.join(process.cwd(), "dist/_worker.js");
+
+        // Process all JS files in the worker directory
+        const files = fs.readdirSync(workerDir);
+        for (const file of files) {
+          if (file.endsWith(".mjs") || file.endsWith(".js")) {
+            const filePath = path.join(workerDir, file);
+            let content = fs.readFileSync(filePath, "utf-8");
+
+            // Skip if already injected
+            if (content.includes("// MessageChannel polyfill for React 19 compatibility")) {
+              continue;
+            }
+
+            // Add polyfill at the very beginning
+            content = polyfill + content;
+            fs.writeFileSync(filePath, content);
+          }
         }
+
+        // Also process chunks subdirectory
+        const chunksDir = path.join(workerDir, "chunks");
+        if (fs.existsSync(chunksDir)) {
+          const chunkFiles = fs.readdirSync(chunksDir);
+          for (const file of chunkFiles) {
+            if (file.endsWith(".mjs") || file.endsWith(".js")) {
+              const filePath = path.join(chunksDir, file);
+              let content = fs.readFileSync(filePath, "utf-8");
+
+              // Skip if already injected
+              if (content.includes("// MessageChannel polyfill for React 19 compatibility")) {
+                continue;
+              }
+
+              // Add polyfill at the very beginning
+              content = polyfill + content;
+
+              // Also replace MessageChannel constructor calls with a safe wrapper
+              // This handles cases where new MessageChannel() is called before the polyfill loads
+              content = content.replace(
+                /new\s+MessageChannel\s*\(\s*\)/g,
+                `(globalThis.MessageChannel ? new globalThis.MessageChannel() : {port1: {postMessage() {}}, port2: {postMessage() {}}})`
+              );
+
+              fs.writeFileSync(filePath, content);
+            }
+          }
+        }
+
+        console.log("✓ Injected MessageChannel polyfill into all worker files");
       } catch (err) {
         console.error("Failed to inject polyfills:", err);
       }
