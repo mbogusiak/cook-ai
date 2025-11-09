@@ -1,0 +1,12 @@
+name = "meal-flow"
+main = "wrangler-worker.js"
+site = { bucket = "dist" }
+build = { command = "npm run build", cwd = "." }
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# KV Namespace for session storage
+[[kv_namespaces]]
+binding = "SESSION"
+id = ""
+preview_id = ""

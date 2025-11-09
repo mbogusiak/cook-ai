@@ -13,6 +13,9 @@ export default defineConfig({
   server: { port: 3000 },
   adapter: cloudflare({
     mode: "advanced",
+    platformProxy: {
+      enabled: true,
+    },
   }),
   vite: {
     plugins: [tailwindcss()],
@@ -22,7 +25,7 @@ export default defineConfig({
       },
     },
     ssr: {
-      external: ["node:buffer", "node:util"],
+      external: ["node:buffer", "node:util", "node:crypto"],
     },
   },
   env: {
