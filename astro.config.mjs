@@ -4,7 +4,7 @@ import { defineConfig, envField } from "astro/config";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
-import node from "@astrojs/node";
+import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
@@ -19,9 +19,7 @@ export default defineConfig({
       },
     },
   },
-  adapter: node({
-    mode: "standalone",
-  }),
+  adapter: cloudflare(),
   env: {
     schema: {
       // Public client variables (accessible in browser)
