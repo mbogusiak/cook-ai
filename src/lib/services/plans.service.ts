@@ -46,6 +46,7 @@ function calculateSlotTargets(dailyCalories: number): Record<Enums<"meal_slot">,
 
 /**
  * Get recipes matching slot and calorie target (±margin, default ±20%)
+ * Optimized: Uses single query with JOIN to reduce subrequests
  */
 async function getRecipesForSlot(
   supabase: SupabaseClient<Database>,
@@ -62,44 +63,39 @@ async function getRecipesForSlot(
     `[getRecipesForSlot] Fetching ${slot} recipes (${minCalories}-${maxCalories} cal, excluding ${excludeRecipeIds.length} recipes)`
   );
 
+  // Single query: Join recipes with recipe_slots table to filter by slot in one go
   const { data, error } = await supabase
     .from("recipes")
-    .select("id, name, calories_kcal, portions")
+    .select(
+      `
+      id,
+      name,
+      calories_kcal,
+      portions,
+      recipe_slots!inner(slot)
+      `
+    )
     .eq("is_active", true)
+    .eq("recipe_slots.slot", slot)
     .gte("calories_kcal", minCalories)
     .lte("calories_kcal", maxCalories)
     .limit(limit);
 
   if (error) {
-    console.error(`[getRecipesForSlot] Query error for ${slot}:`, error);
-    throw new ServerError(`Failed to fetch recipes for ${slot} slot`, error);
+    console.error(`[getRecipesForSlot] Slot query error for ${slot}:`, error);
+    throw new ServerError(`Failed to fetch recipe slots for ${slot}`, error);
   }
 
-  console.log(`[getRecipesForSlot] Found ${data?.length || 0} recipes for ${slot} before exclusion filter`);
+  console.log(`[getRecipesForSlot] Found ${data?.length || 0} recipes for ${slot}`);
 
-  // Filter by slot availability
+  // Filter by exclusion list if needed
   if (!data || data.length === 0) {
     return [];
   }
 
-  const recipeIds = data.map((r) => r.id);
+  const result = (data as any[]).filter((recipe) => !excludeRecipeIds.includes(recipe.id));
 
-  // Check which recipes have this slot
-  const { data: slotData, error: slotError } = await supabase
-    .from("recipe_slots")
-    .select("recipe_id")
-    .eq("slot", slot)
-    .in("recipe_id", recipeIds);
-
-  if (slotError) {
-    console.error(`[getRecipesForSlot] Slot query error for ${slot}:`, slotError);
-    throw new ServerError(`Failed to fetch recipe slots for ${slot}`, slotError);
-  }
-
-  const validRecipeIds = new Set((slotData || []).map((s) => s.recipe_id));
-  const result = data.filter((recipe) => validRecipeIds.has(recipe.id) && !excludeRecipeIds.includes(recipe.id));
-
-  console.log(`[getRecipesForSlot] After filters: ${result.length} recipes for ${slot}`);
+  console.log(`[getRecipesForSlot] After exclusion filters: ${result.length} recipes for ${slot}`);
 
   return result;
 }
