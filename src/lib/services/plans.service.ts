@@ -64,8 +64,11 @@ async function getRecipesForSlot(
     `[getRecipesForSlot] Fetching ${slot} recipes (${minCalories}-${maxCalories} cal, excluding ${excludeRecipeIds.length} recipes)`
   );
 
-  // Single query with relationship: fetch recipes + slots, filter slot client-side
-  // This avoids the secondary query while maintaining compatibility
+  // Use Set for O(1) lookup instead of array.includes()
+  const excludeSet = new Set(excludeRecipeIds);
+
+  // Single optimized query: fetch recipes with calorie filters
+  // Fetch limit*3 to compensate for filtering overhead
   const { data, error } = await supabase
     .from("recipes")
     .select(
@@ -74,33 +77,36 @@ async function getRecipesForSlot(
       name,
       calories_kcal,
       portions,
-      recipe_slots(slot)
+      recipe_slots!inner(slot)
       `
     )
     .eq("is_active", true)
+    .eq("recipe_slots.slot", slot)
     .gte("calories_kcal", minCalories)
     .lte("calories_kcal", maxCalories)
-    .limit(limit * 2); // Fetch more since we'll filter by slot client-side
+    .limit(limit * 3); // Fetch more to compensate for exclusion filtering
 
   if (error) {
     console.error(`[getRecipesForSlot] Query error for ${slot}:`, error);
     throw new ServerError(`Failed to fetch recipe slots for ${slot}`, error);
   }
 
-  console.log(`[getRecipesForSlot] Found ${data?.length || 0} recipes for ${slot} before slot filter`);
+  console.log(`[getRecipesForSlot] Found ${data?.length || 0} recipes for ${slot} before exclusion filter`);
 
-  // Filter by slot client-side and exclusion list
   if (!data || data.length === 0) {
     return [];
   }
 
+  // Filter out excluded recipes using Set for O(1) lookup
   const result = (data as any[])
-    .filter((recipe: any) => {
-      // Check if this recipe has the requested slot
-      const hasSlot = recipe.recipe_slots && recipe.recipe_slots.some((rs: any) => rs.slot === slot);
-      return hasSlot && !excludeRecipeIds.includes(recipe.id);
-    })
-    .slice(0, limit); // Trim to desired limit after filtering
+    .filter((recipe: any) => !excludeSet.has(recipe.id))
+    .map((recipe: any) => ({
+      id: recipe.id,
+      name: recipe.name,
+      calories_kcal: recipe.calories_kcal,
+      portions: recipe.portions
+    }))
+    .slice(0, limit); // Trim to desired limit
 
   console.log(`[getRecipesForSlot] After filters: ${result.length} recipes for ${slot}`);
 
