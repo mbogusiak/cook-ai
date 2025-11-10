@@ -15,7 +15,7 @@
 - [7. Project status](#7-project-status)
 - [8. License](#8-license)
 
-## 1. Project name 
+## 1. Project name
 
 **Mealflow — Meal Planner**
 
