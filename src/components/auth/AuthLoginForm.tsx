@@ -79,6 +79,7 @@ export function AuthLoginForm({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(result.data),
+        credentials: "include",
       });
 
       const responseData = await response.json();
@@ -104,7 +105,9 @@ export function AuthLoginForm({
       // Check if user has active plan (client-side fallback)
       // SSR guard in login.astro should handle this, but we provide fallback
       try {
-        const plansResponse = await fetch("/api/plans?state=active&limit=1");
+        const plansResponse = await fetch("/api/plans?state=active&limit=1", {
+          credentials: "include",
+        });
         if (plansResponse.ok) {
           const plansData = await plansResponse.json();
           const hasActivePlan = plansData.has_active_plan || (plansData.data && plansData.data.length > 0);

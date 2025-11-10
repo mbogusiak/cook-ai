@@ -8,5 +8,5 @@ compatibility_flags = ["nodejs_compat"]
 # KV Namespace for session storage
 [[kv_namespaces]]
 binding = "SESSION"
-id = ""
-preview_id = ""
+id = "session-kv-prod"
+preview_id = "session-kv-preview"
