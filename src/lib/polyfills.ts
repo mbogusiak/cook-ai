@@ -24,8 +24,12 @@ if (typeof globalThis !== "undefined" && !globalThis.MessageChannel) {
           }, 0);
         },
         onmessage: null as any,
-        start: () => {},
-        close: () => {},
+        start: () => {
+          // No-op for MessagePort polyfill
+        },
+        close: () => {
+          // No-op for MessagePort polyfill
+        },
       });
 
       this.port1 = createPort(messages2);

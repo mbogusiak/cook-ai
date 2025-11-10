@@ -13,4 +13,3 @@ describe("cn", () => {
     expect(result).toBe("btn");
   });
 });
-

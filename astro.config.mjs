@@ -25,8 +25,9 @@ if (typeof globalThis !== "undefined" && !globalThis.MessageChannel) {
     name: "inject-cloudflare-polyfills",
     apply: "build",
     enforce: "post",
-    async writeBundle(options) {
+    async writeBundle(_options) {
       try {
+        // eslint-disable-next-line no-undef
         const workerDir = path.join(process.cwd(), "dist/_worker.js");
 
         // Process all JS files in the worker directory
@@ -76,8 +77,10 @@ if (typeof globalThis !== "undefined" && !globalThis.MessageChannel) {
           }
         }
 
+        // eslint-disable-next-line no-undef, no-console
         console.log("✓ Injected MessageChannel polyfill into all worker files");
       } catch (err) {
+        // eslint-disable-next-line no-undef, no-console
         console.error("Failed to inject polyfills:", err);
       }
     },

@@ -104,7 +104,7 @@ async function getRecipesForSlot(
       id: recipe.id,
       name: recipe.name,
       calories_kcal: recipe.calories_kcal,
-      portions: recipe.portions
+      portions: recipe.portions,
     }))
     .slice(0, limit); // Trim to desired limit
 
