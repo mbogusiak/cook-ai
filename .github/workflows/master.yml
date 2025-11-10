@@ -1,0 +1,53 @@
+name: CI/CD • Deploy to Cloudflare Pages (master)
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: pages-deploy-master
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+
+    env:
+      # Build-time public envs required by Astro client code
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Use Node.js from .nvmrc
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Deploy using Wrangler Action (Pages Direct Upload). 'pages-action' is archived.
+      - name: Deploy to Cloudflare Pages (production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Deploy the built site with SSR worker generated in dist/_worker.js
+          command: pages deploy dist --project-name=${{ secrets.CF_PAGES_PROJECT_NAME }} --branch=master
+          # Enable GitHub Deployments for nice deployment status
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+
