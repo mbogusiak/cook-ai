@@ -46,7 +46,8 @@ function calculateSlotTargets(dailyCalories: number): Record<Enums<"meal_slot">,
 
 /**
  * Get recipes matching slot and calorie target (±margin, default ±20%)
- * Optimized: Uses single query with JOIN to reduce subrequests
+ * Optimized: Fetches recipes with extended limit, then filters by slot client-side
+ * This reduces subrequests by using relationship selection instead of secondary filter query
  */
 async function getRecipesForSlot(
   supabase: SupabaseClient<Database>,
@@ -63,7 +64,8 @@ async function getRecipesForSlot(
     `[getRecipesForSlot] Fetching ${slot} recipes (${minCalories}-${maxCalories} cal, excluding ${excludeRecipeIds.length} recipes)`
   );
 
-  // Single query: Join recipes with recipe_slots table to filter by slot in one go
+  // Single query with relationship: fetch recipes + slots, filter slot client-side
+  // This avoids the secondary query while maintaining compatibility
   const { data, error } = await supabase
     .from("recipes")
     .select(
@@ -72,30 +74,35 @@ async function getRecipesForSlot(
       name,
       calories_kcal,
       portions,
-      recipe_slots!inner(slot)
+      recipe_slots(slot)
       `
     )
     .eq("is_active", true)
-    .eq("recipe_slots.slot", slot)
     .gte("calories_kcal", minCalories)
     .lte("calories_kcal", maxCalories)
-    .limit(limit);
+    .limit(limit * 2); // Fetch more since we'll filter by slot client-side
 
   if (error) {
-    console.error(`[getRecipesForSlot] Slot query error for ${slot}:`, error);
+    console.error(`[getRecipesForSlot] Query error for ${slot}:`, error);
     throw new ServerError(`Failed to fetch recipe slots for ${slot}`, error);
   }
 
-  console.log(`[getRecipesForSlot] Found ${data?.length || 0} recipes for ${slot}`);
+  console.log(`[getRecipesForSlot] Found ${data?.length || 0} recipes for ${slot} before slot filter`);
 
-  // Filter by exclusion list if needed
+  // Filter by slot client-side and exclusion list
   if (!data || data.length === 0) {
     return [];
   }
 
-  const result = (data as any[]).filter((recipe) => !excludeRecipeIds.includes(recipe.id));
+  const result = (data as any[])
+    .filter((recipe: any) => {
+      // Check if this recipe has the requested slot
+      const hasSlot = recipe.recipe_slots && recipe.recipe_slots.some((rs: any) => rs.slot === slot);
+      return hasSlot && !excludeRecipeIds.includes(recipe.id);
+    })
+    .slice(0, limit); // Trim to desired limit after filtering
 
-  console.log(`[getRecipesForSlot] After exclusion filters: ${result.length} recipes for ${slot}`);
+  console.log(`[getRecipesForSlot] After filters: ${result.length} recipes for ${slot}`);
 
   return result;
 }
