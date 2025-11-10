@@ -13,7 +13,17 @@ export function useAuth(): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
+    let supabase: ReturnType<typeof getSupabaseBrowserClient> | null = null;
+    try {
+      supabase = getSupabaseBrowserClient();
+    } catch (err) {
+      // If the client cannot be initialized (e.g., missing PUBLIC env vars),
+      // gracefully degrade to unauthenticated state so the app can still hydrate.
+      console.error("Supabase client initialization failed:", err);
+      setCurrentUser(null);
+      setIsLoading(false);
+      return;
+    }
 
     // Get initial session
     const getInitialSession = async () => {

@@ -102,30 +102,9 @@ export function AuthLoginForm({
         return;
       }
 
-      // Check if user has active plan (client-side fallback)
-      // SSR guard in login.astro should handle this, but we provide fallback
-      try {
-        const plansResponse = await fetch("/api/plans?state=active&limit=1", {
-          credentials: "include",
-        });
-        if (plansResponse.ok) {
-          const plansData = await plansResponse.json();
-          const hasActivePlan = plansData.has_active_plan || (plansData.data && plansData.data.length > 0);
-
-          if (hasActivePlan) {
-            window.location.href = "/dashboard";
-          } else {
-            window.location.href = "/onboarding";
-          }
-        } else {
-          // Fallback to onboarding if check fails
-          window.location.href = "/onboarding";
-        }
-      } catch (checkError) {
-        // Fallback to onboarding on error
-        console.error("Error checking active plan:", checkError);
-        window.location.href = "/onboarding";
-      }
+      // After successful login, trigger a full server render so SSR guard can
+      // detect the session and redirect to /dashboard or /onboarding.
+      window.location.href = "/auth/login";
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Wystąpił błąd podczas logowania");
       setIsSubmitting(false);

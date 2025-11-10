@@ -33,8 +33,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
     } = await supabase.auth.getSession();
     context.locals.session = session || undefined;
   } else {
-    context.locals.user = undefined;
-    context.locals.session = undefined;
+    // Fallback: check session explicitly in case cookies were just set
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (session && !sessionError && session.user) {
+      context.locals.user = {
+        id: session.user.id,
+        email: session.user.email || undefined,
+      };
+      context.locals.session = session;
+    } else {
+      context.locals.user = undefined;
+      context.locals.session = undefined;
+    }
   }
 
   // Check if route requires authentication
