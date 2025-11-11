@@ -11,30 +11,26 @@ export class LoginPage extends BasePage {
     await this.getByTestId("login-email").fill(email);
     await this.getByTestId("login-password").fill(password);
 
-    // Start listening for navigation BEFORE clicking submit
-    // This ensures we don't miss the navigation event
-    const navigationPromise = this.page.waitForURL(/^(?!.*auth\/login)/, { timeout: 30000 }).catch(() => null);
-
     await this.getByTestId("login-submit").click();
 
-    // Wait for either:
-    // 1. Successful login (navigation away from /auth/login)
-    // 2. Error message (login fails, page stays on login)
-    // 3. Timeout (form submission completes, but result is unclear)
-    const result = await Promise.race([
-      navigationPromise,
-      // Wait for error message to appear (login failed)
+    // Wait for one of these to happen:
+    // 1. Page navigates to /dashboard or /onboarding (successful login)
+    // 2. Error message appears (failed login, page stays on /auth/login)
+    // 3. Network becomes idle (form submission complete)
+
+    // Use Promise.all to wait for at least one of these conditions
+    await Promise.race([
+      // Success: wait for navigation to dashboard or onboarding
+      this.page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 30000 }),
+      // Failure: wait for error message to appear
       this.page
         .locator('[data-testid="login-error"], .text-destructive')
         .first()
-        .waitFor({ timeout: 5000 })
-        .catch(() => null),
-      // Fallback: wait for network to become idle
-      this.page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => null),
-    ]);
-
-    // If we got a result from the race, that's fine - we can continue
-    // The test case will verify the outcome (redirect or error message)
+        .waitFor({ timeout: 10000 }),
+    ]).catch(async (error) => {
+      // If both conditions failed, still wait for network idle as fallback
+      await this.page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+    });
   }
 
   async expectError(message?: string): Promise<void> {
