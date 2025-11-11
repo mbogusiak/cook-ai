@@ -11,30 +11,18 @@ export class LoginPage extends BasePage {
     await this.getByTestId("login-email").fill(email);
     await this.getByTestId("login-password").fill(password);
 
-    // Prepare navigation listener before clicking
-    // This ensures we don't miss the redirect if it happens immediately
-    const navigationPromise = this.page.waitForLoadState("networkidle");
-
     await this.getByTestId("login-submit").click();
 
-    // Wait for the network to become idle after form submission
-    // The form submission happens via fetch, then redirect via window.location.href
+    // Wait for form submission to complete
+    // Either: successful login (redirects) OR failed login (shows error, stays on page)
     try {
-      await navigationPromise;
-    } catch (_error) {
-      // If networkidle times out, that's ok - just wait for the URL to change
+      // Try to wait for navigation first (successful login)
+      await this.page.waitForNavigation({ timeout: 15000 });
+    } catch {
+      // If navigation doesn't happen, wait for network to idle and check for errors
+      // This handles the case where login fails and we stay on the login page
+      await this.page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
     }
-
-    // Ensure we're NOT on the login page anymore
-    // Wait for the actual redirect to complete
-    await this.page.waitForFunction(
-      () => {
-        const path = window.location.pathname;
-        // We're done when we're NOT on /auth/login anymore
-        return !path.startsWith("/auth/login");
-      },
-      { timeout: 10000 }
-    );
   }
 
   async expectError(message?: string): Promise<void> {
@@ -68,9 +56,19 @@ export class RegisterPage extends BasePage {
     await this.getByTestId("register-email").fill(email);
     await this.getByTestId("register-password").fill(password);
     await this.getByTestId("register-password-confirm").fill(confirmPassword ?? password);
+
     await this.getByTestId("register-submit").click();
-    // Wait a bit for form submission to process
-    await this.page.waitForTimeout(500);
+
+    // Wait for form submission to complete
+    // Either: successful registration (redirects) OR failed registration (shows error, stays on page)
+    try {
+      // Try to wait for navigation first (successful registration)
+      await this.page.waitForNavigation({ timeout: 15000 });
+    } catch {
+      // If navigation doesn't happen, wait for network to idle
+      // This handles the case where registration fails and we stay on the register page
+      await this.page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+    }
   }
 
   async expectError(message?: string): Promise<void> {
@@ -102,9 +100,12 @@ export class ResetRequestPage extends BasePage {
 
   async request(email: string): Promise<void> {
     await this.getByTestId("reset-request-email").fill(email);
+
     await this.getByTestId("reset-request-submit").click();
-    // Wait a bit for form submission to process
-    await this.page.waitForTimeout(500);
+
+    // Wait for form submission to complete
+    // Either: success message OR error message appears
+    await this.page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   }
 
   async expectSuccess(): Promise<void> {
@@ -138,6 +139,10 @@ export class ResetConfirmPage extends BasePage {
   async setNewPassword(password: string, confirm?: string): Promise<void> {
     await this.getByTestId("reset-new-password").fill(password);
     await this.getByTestId("reset-new-password-confirm").fill(confirm ?? password);
+
     await this.getByTestId("reset-confirm-submit").click();
+
+    // Wait for form submission to complete
+    await this.page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   }
 }
