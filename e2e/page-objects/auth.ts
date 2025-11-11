@@ -13,24 +13,34 @@ export class LoginPage extends BasePage {
 
     await this.getByTestId("login-submit").click();
 
-    // Wait for one of these to happen:
-    // 1. Page navigates to /dashboard or /onboarding (successful login)
-    // 2. Error message appears (failed login, page stays on /auth/login)
-    // 3. Network becomes idle (form submission complete)
+    const errorLocator = this.page
+      .locator('[data-testid="login-error"], .text-destructive')
+      .first();
 
-    // Use Promise.all to wait for at least one of these conditions
-    await Promise.race([
-      // Success: wait for navigation to dashboard or onboarding
-      this.page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 30000 }),
-      // Failure: wait for error message to appear
-      this.page
-        .locator('[data-testid="login-error"], .text-destructive')
-        .first()
-        .waitFor({ timeout: 10000 }),
-    ]).catch(async (error) => {
-      // If both conditions failed, still wait for network idle as fallback
-      await this.page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
-    });
+    try {
+      // Wait for either:
+      // 1. Error message appears (login failed, page stays on /auth/login)
+      // 2. Page URL changes away from /auth/login (login succeeded, redirecting)
+      await Promise.race([
+        errorLocator.waitFor({ state: "visible", timeout: 10000 }),
+        this.page.waitForFunction(
+          () => !window.location.pathname.includes("/auth/login"),
+          { timeout: 30000 }
+        ),
+      ]);
+    } catch (e) {
+      // If both conditions fail, still wait for network idle as fallback
+      await this.page
+        .waitForLoadState("networkidle", { timeout: 10000 })
+        .catch(() => {});
+    }
+
+    // If no error message appeared, we navigated away from /auth/login
+    // Now wait for the final redirect to /dashboard or /onboarding
+    const hasError = await errorLocator.isVisible().catch(() => false);
+    if (!hasError) {
+      await this.page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 30000 });
+    }
   }
 
   async expectError(message?: string): Promise<void> {
