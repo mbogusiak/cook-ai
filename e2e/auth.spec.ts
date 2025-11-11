@@ -13,6 +13,16 @@ import { OnboardingPage } from "./page-objects/onboarding";
  */
 
 test.describe("Authentication", () => {
+  test.beforeEach(async ({ page }) => {
+    // Warm up the server with a simple request before attempting auth operations
+    // This helps avoid timeout issues on the first request when the dev server is starting up
+    try {
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+    } catch {
+      // If this fails, continue anyway - it's just a warmup
+    }
+  });
+
   test.describe("Register (US-001)", () => {
     test("should register new user and redirect to onboarding", async ({ page }) => {
       // Arrange

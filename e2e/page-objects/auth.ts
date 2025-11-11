@@ -10,9 +10,31 @@ export class LoginPage extends BasePage {
   async login(email: string, password: string): Promise<void> {
     await this.getByTestId("login-email").fill(email);
     await this.getByTestId("login-password").fill(password);
+
+    // Prepare navigation listener before clicking
+    // This ensures we don't miss the redirect if it happens immediately
+    const navigationPromise = this.page.waitForLoadState("networkidle");
+
     await this.getByTestId("login-submit").click();
-    // Wait a bit for form submission to process
-    await this.page.waitForTimeout(500);
+
+    // Wait for the network to become idle after form submission
+    // The form submission happens via fetch, then redirect via window.location.href
+    try {
+      await navigationPromise;
+    } catch (_error) {
+      // If networkidle times out, that's ok - just wait for the URL to change
+    }
+
+    // Ensure we're NOT on the login page anymore
+    // Wait for the actual redirect to complete
+    await this.page.waitForFunction(
+      () => {
+        const path = window.location.pathname;
+        // We're done when we're NOT on /auth/login anymore
+        return !path.startsWith("/auth/login");
+      },
+      { timeout: 10000 }
+    );
   }
 
   async expectError(message?: string): Promise<void> {

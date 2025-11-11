@@ -22,9 +22,17 @@ test.describe("Onboarding & Plan Generation", () => {
       password: process.env.E2E_PASSWORD!,
     };
 
+    // Warm up the server with a simple request before attempting login
+    // This helps avoid timeout issues on the first request when the dev server is starting up
+    try {
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+    } catch {
+      // If this fails, continue anyway - it's just a warmup
+    }
+
     await loginPage.open();
     await loginPage.login(testUser.email, testUser.password);
-    await expect(page).toHaveURL(/\/(dashboard|onboarding)/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/(dashboard|onboarding)/, { timeout: 15000 });
 
     // Navigate to onboarding (in case user already has a plan)
     await page.goto("/onboarding");
