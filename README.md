@@ -25,22 +25,22 @@ Smart and intuitive meal planning web app for Thermomix users that automates cre
 
 - Daily plan across 4 slots: breakfast, lunch, dinner, snack
 - Calorie distribution per day: 20% / 30% / 30% / 20% with ±20% selection tolerance
-- Multi‑portion logic: if a lunch/dinner recipe has >1 serving, it’s planned again the next day as leftovers; calories are evenly split across days
-- Clear UI labels for “Cook for 2 days” (day 1) and “Leftovers” (day 2)
+- Multi‑portion logic: if a lunch/dinner recipe has >1 serving, it's planned again the next day as leftovers; calories are evenly split across days
+- Clear UI labels for "Cook for 2 days" (day 1) and "Leftovers" (day 2)
 - Swap any planned meal for up to 3 suitable alternatives; autosave for all changes
-- OAuth login via Google/Facebook
+- User authentication via email/password (OAuth via Google/Facebook planned for future release)
 
 For detailed product requirements, see `.ai/prd.md`. Architectural notes and MVP rationale are in `.ai/tech-stack.md`.
 
 ## 3. Tech stack
 
-- Astro 5 for fast sites with islands architecture
-- React 19 + TypeScript 5 for interactive UI
+- Astro 5 with SSR for fast, dynamic web applications
+- React 19 + TypeScript 5 for interactive components
 - Tailwind CSS 4 + shadcn/ui (Radix primitives, CVA, clsx) for composable components
-- Supabase: OAuth (Google/Facebook), Postgres with RLS, Realtime, Functions
-- Plan generation as a single server function (Supabase Edge Function or Astro endpoint) using a deterministic algorithm (no LLM in the critical path)
-- Validation with Zod; optional LLM only for non‑critical features (e.g., textual summaries)
-- Observability and safety: Sentry/Logtail, server‑side secrets, and rate limiting for generation
+- Supabase: PostgreSQL with RLS, Postgres auth (email/password), infrastructure for OAuth (Google/Facebook)
+- Validation with Zod for input validation
+- Plan generation: planned as server function (Supabase Edge Function or Astro endpoint)
+- Development tools: ESLint, Prettier, Husky + lint-staged for code quality
 
 References:
 - Product Requirements: `.ai/prd.md`
@@ -93,14 +93,15 @@ From `package.json`:
 
 ## 6. Project scope
 
-- In scope:
+- In scope (MVP):
   - Responsive web application (RWD)
-  - OAuth via Google/Facebook
+  - User authentication via email/password
   - Use of Cookido recipe database
   - Plan generation with multi‑portion logic
   - Interactions: status changes (planned/completed/skipped), meal swapping with suitable alternatives, autosave
 
-- Out of scope (MVP):
+- Out of scope (future releases):
+  - OAuth via Google/Facebook
   - Native app/PWA
   - Guest mode
   - User‑added custom recipes
