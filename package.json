@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "deduplicate": "tsx scripts/deduplicate-recipes.ts",
+    "deduplicate": "tsx .ai/migration/scripts/deduplicate-recipes.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
