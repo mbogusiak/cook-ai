@@ -32,7 +32,7 @@ Smart and intuitive meal planning web app for Thermomix users that automates cre
 
 For detailed product requirements, see `.ai/prd.md`. Architectural notes and MVP rationale are in `.ai/tech-stack.md`.
 
-## 3. Tech stack
+## 3. Tech stack 
 
 - Astro 5 with SSR for fast, dynamic web applications
 - React 19 + TypeScript 5 for interactive components
