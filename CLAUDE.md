@@ -1,151 +1,165 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working with this repository.
 
-## Commands
+## Quick Reference
 
-### Development
-- `npm install` - Install dependencies
-- `npm run dev` - Start development server (runs on port 3000)
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run format` - Format code with Prettier
+| Task | Command |
+|------|---------|
+| Install | `npm install` |
+| Dev server | `npm run dev` (port 3000) |
+| Build | `npm run build` |
+| Preview | `npm run preview` |
+| Lint | `npm run lint` / `npm run lint:fix` |
+| Format | `npm run format` |
+| Unit tests | `npm run test` / `npm run test:watch` |
+| E2E tests | `npm run e2e` / `npm run e2e:headed` |
+| Add Shadcn component | `npx shadcn@latest add [component-name]` → `src/components/ui/` |
 
-### Shadcn UI Components
-- `npx shadcn@latest add [component-name]` - Add a new Shadcn UI component
-- Components are installed to `src/components/ui/`
-- See https://ui.shadcn.com/r for available components
+---
 
-## Architecture
+## Project Overview
 
-### Project Purpose
-Cookido AI is a meal planning application (Planer Żywieniowy) for Thermomix users. It generates personalized weekly meal plans based on calorie goals using 6000+ recipes from the Cookido platform. Key features include multi-portion meal support (cooking once for 2 days), flexible meal swapping, progress tracking, and OAuth authentication (Google/Facebook).
+**Cookido AI** is a meal planning app (Planer Żywieniowy) for Thermomix users. It generates personalized weekly meal plans from 6000+ Cookido recipes based on calorie goals. Features: multi-portion meals (cook once for 2 days), meal swapping, progress tracking, OAuth (Google/Facebook).
 
 ### Tech Stack
-- **Framework**: Astro 5 with SSR (server output mode)
-- **UI Library**: React 19 for interactive components
-- **Styling**: Tailwind CSS 4 with Shadcn/ui components (new-york style, neutral theme)
-- **Language**: TypeScript 5 (strict mode via Astro tsconfig)
-- **Backend**: Supabase for database and authentication
-- **Validation**: Zod for input validation
-- **Node Version**: 22.14.0 (see `.nvmrc`)
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Astro 5 (SSR, server output) |
+| UI | React 19, Shadcn/ui (new-york, neutral) |
+| Styling | Tailwind CSS 4 |
+| Language | TypeScript 5 (strict) |
+| Backend | Supabase (auth, DB) |
+| Validation | Zod |
+| Deployment | Cloudflare (advanced mode) |
+| Node | 22.14.0 (`.nvmrc`) |
 
 ### Directory Structure
-- `src/` - All source code
-  - `layouts/` - Astro layout templates
-  - `pages/` - Astro pages (file-based routing)
-  - `pages/api/` - API endpoints (use uppercase GET, POST handlers)
-  - `middleware/index.ts` - Astro middleware for request/response modification
-  - `components/` - UI components (Astro for static, React for interactive)
-  - `components/ui/` - Shadcn UI components
-  - `lib/` - Services, utilities, and helpers
-  - `db/` - Supabase clients and type definitions
-  - `types.ts` - Shared TypeScript types (Entities, DTOs)
-  - `styles/` - Global CSS including Tailwind configuration
-  - `assets/` - Internal static assets
-- `public/` - Public static assets
-- `.ai/` - Product documentation including PRD and implementation guides
 
-### Key Configuration Files
-- `astro.config.mjs` - Astro configuration (SSR mode, Node adapter, React integration)
-- `tsconfig.json` - TypeScript configuration with path aliases (`@/*` → `./src/*`)
-- `components.json` - Shadcn UI configuration
-- `eslint.config.js` - ESLint configuration (includes React Hooks, a11y, Prettier)
-- `.cursor/rules/` - AI assistant rules for Cursor IDE
-- `.github/copilot-instructions.md` - GitHub Copilot instructions
-- `.windsurfrules` - Windsurf AI configuration
+```
+src/
+├── layouts/       # Astro layout templates
+├── pages/         # File-based routing
+│   └── api/       # API endpoints (GET, POST handlers)
+├── middleware/    # Astro middleware (index.ts)
+├── components/    # Astro (static) + React (interactive)
+│   └── ui/        # Shadcn components
+├── lib/           # Services, utilities, helpers
+├── db/            # Supabase clients and types
+├── types.ts       # Shared entities and DTOs
+├── styles/        # Global CSS, Tailwind config
+└── assets/        # Internal static assets
+public/            # Public static assets
+.ai/               # Product docs (PRD, guides) — Polish
+```
 
-## Coding Standards
+### Key Config Files
 
-### General Principles
-- **Error Handling**: Handle errors and edge cases at the beginning of functions with early returns
-- **Clean Code**: Use guard clauses, avoid unnecessary else statements, place happy path last
-- **Linting**: Always use ESLint feedback to improve code quality
-- **Logging**: Implement proper error logging with user-friendly messages
+- `astro.config.mjs` — SSR, Cloudflare adapter, React, path alias `@/*` → `./src/*`
+- `tsconfig.json` — TypeScript, path aliases
+- `components.json` — Shadcn UI
+- `eslint.config.js` — ESLint (Hooks, a11y, Prettier)
+- `.cursor/rules/` — Cursor AI rules
+- `.github/copilot-instructions.md` — Copilot instructions
+
+---
+
+## Coding Conventions
+
+### General
+
+- **Error handling**: Guard clauses, early returns, handle edge cases first
+- **Happy path last**: Avoid nested conditionals; use if-return pattern
+- **Linting**: Apply ESLint feedback; use `lint:fix` when appropriate
+- **Logging**: User-friendly error messages with proper logging
 
 ### TypeScript
-- Use strict mode (enforced by Astro's strict tsconfig)
-- Avoid `any` type
-- Define types in `src/types.ts` for shared entities and DTOs
-- Use Zod schemas for runtime validation
 
-### Component Architecture
-- **Astro Components** (`.astro`): Use for static content and layouts
-- **React Components** (`.tsx`): Use only when interactivity is needed
-- Never use Next.js directives like `"use client"` (Astro handles SSR differently)
-- Extract custom hooks to `src/components/hooks/`
-- Use `React.memo()` for expensive components with stable props
-- Use `useCallback` for event handlers passed to children
-- Use `useMemo` for expensive calculations
+- Strict mode (Astro tsconfig)
+- No `any`; shared types in `src/types.ts`
+- Zod for runtime validation
 
-### Styling with Tailwind
-- Use Tailwind 4 utility classes
-- Use `@layer` directive for organizing custom styles
-- Use arbitrary values with square brackets for one-off designs (e.g., `w-[123px]`)
-- Leverage responsive variants (`sm:`, `md:`, `lg:`)
-- Use state variants (`hover:`, `focus-visible:`, `active:`)
-- Follow Shadcn UI's new-york style with neutral base color
+### Components
+
+| Type | Use case |
+|------|----------|
+| `.astro` | Static content, layouts |
+| `.tsx` | Interactivity only |
+
+- Custom hooks → `src/components/hooks/`
+- No `"use client"` (Astro ≠ Next.js)
+- Performance: `React.memo()`, `useCallback`, `useMemo` for expensive components
+
+### Styling (Tailwind 4)
+
+- Utility classes; `@layer` for custom styles
+- Arbitrary values: `w-[123px]`
+- Responsive: `sm:`, `md:`, `lg:`; states: `hover:`, `focus-visible:`, `active:`
+- Shadcn: new-york style, neutral theme
 
 ### Accessibility
-- Use semantic HTML elements
-- Implement ARIA attributes only when necessary (avoid redundancy)
-- Use ARIA landmarks for page regions
-- Provide `aria-label` or `aria-labelledby` for elements without visible labels
-- Use `aria-live` regions for dynamic content updates
-- Follow a11y rules enforced by `eslint-plugin-jsx-a11y`
 
-### API Routes
-- Create endpoints in `src/pages/api/`
-- Use uppercase method names: `export async function GET(context) { }`
-- Add `export const prerender = false` for dynamic routes
-- Use Zod for input validation
-- Extract business logic to services in `src/lib/`
-- Access Supabase via `context.locals.supabase` (not direct imports)
+- Semantic HTML; ARIA only when needed
+- `aria-label` / `aria-labelledby` for unlabeled elements
+- `aria-live` for dynamic content
+- Enforced by `eslint-plugin-jsx-a11y`
 
-### Backend and Database
-- Use Supabase for authentication and database operations
-- Import `SupabaseClient` type from `src/db/supabase.client.ts` (not from `@supabase/supabase-js`)
-- In Astro routes, access Supabase via `context.locals.supabase`
-- Validate all data with Zod schemas before database operations
-- Follow Row Level Security (RLS) best practices
+### API & Backend
+
+- **Endpoints**: `src/pages/api/` — uppercase handlers: `export async function GET(context)`
+- **Dynamic routes**: `export const prerender = false`
+- **Supabase**: `context.locals.supabase` (not direct imports)
+- **Types**: `SupabaseClient` from `src/db/supabase.client.ts`
+- **Validation**: Zod before DB operations; extract logic to `src/lib/`
+- **Security**: Follow RLS best practices
 
 ### Astro-Specific
-- Use View Transitions API (`<ClientRouter>`) for smooth page transitions
-- Use `Astro.cookies` for server-side cookie management
-- Access environment variables via `import.meta.env`
-- Leverage content collections with type safety for structured content
-- Use hybrid rendering (SSR + static) where appropriate
 
-### React Hooks Rules
-- Only call hooks at the top level (never in loops, conditions, or nested functions)
-- Only call hooks from React function components or custom hooks
-- Custom hooks must start with "use"
-- Never call hooks conditionally
-- Ensure hooks are called in the same order across renders
-- Enforced by `eslint-plugin-react-hooks` and `eslint-plugin-react-compiler`
+- View Transitions: `<ClientRouter>`
+- Cookies: `Astro.cookies`
+- Env: `import.meta.env`
+- Hybrid rendering (SSR + static) where appropriate
+
+### React Hooks
+
+- Top level only; same order every render
+- Custom hooks: prefix with `use`
+- Enforced by `eslint-plugin-react-hooks`, `eslint-plugin-react-compiler`
+
+---
 
 ## Product Context
 
-The application implements a meal planner as specified in `.ai/prd.md`:
-- **User Authentication**: OAuth via Google and Facebook (no guest mode)
-- **Meal Planning**: Generates 7-day plans with 4 meals/day (breakfast 20%, lunch 30%, dinner 30%, snack 20% of daily calories)
-- **Multi-portion Logic**: Supports cooking once for 2 days to save time (dinners/lunches only)
-- **Meal Management**: Users can mark meals as completed/skipped, swap meals (3 alternatives shown)
-- **Calorie Matching**: Meals selected within ±20% of target calories per slot
-- **Data Source**: 6000+ recipes from Cookido platform
-- **Success Metric**: Plan completion = 90%+ meals marked as completed
+See `.ai/prd.md` for full spec. Summary:
 
-## Lint-Staged and Git Hooks
+- **Auth**: OAuth (Google, Facebook); no guest mode
+- **Plans**: 7 days × 4 meals (breakfast 20%, lunch 30%, dinner 30%, snack 20%)
+- **Multi-portion**: Cook once for 2 days (dinners/lunches)
+- **Meals**: Mark completed/skipped; swap with 3 alternatives
+- **Calories**: ±20% of target per slot
+- **Success**: 90%+ meals completed
 
-The project uses Husky and lint-staged for pre-commit hooks:
-- TypeScript/TSX/Astro files: Auto-fixed with ESLint
-- JSON/CSS/Markdown files: Auto-formatted with Prettier
+---
 
-## Important Notes
+## Tooling
 
-- This is an Astro SSR application, not a static site or Next.js app
-- Shadcn UI components are React-based but integrated with Astro
-- All documentation in `.ai/` directory is in Polish
-- The project follows the 10xDevs.pl program structure
+### Pre-commit (Husky + lint-staged)
+
+- `*.{ts,tsx,astro}` → ESLint --fix
+- `*.{json,css,md}` → Prettier
+
+### E2E Testing (Playwright)
+
+- See `.cursor/rules/playwright-e2e-testing.mdc` for guidelines
+- Page objects: `./e2e/page-objects`
+- Use `data-testid` for selectors; `page.getByTestId('name')`
+
+---
+
+## Notes
+
+- **Astro SSR** — not static, not Next.js
+- **Shadcn** — React components integrated with Astro
+- **Docs** — `.ai/` content is in Polish
+- **Program** — 10xDevs.pl structure
