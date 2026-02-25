@@ -16,3 +16,5 @@ export class DashboardPage extends BasePage {
     await this.planCards.first().click();
   }
 }
+
+

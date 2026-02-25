@@ -115,3 +115,5 @@ export function mapSupabaseAuthError(error: { message: string; status?: number }
     code: "UNKNOWN_ERROR",
   };
 }
+
+

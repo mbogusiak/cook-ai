@@ -51,3 +51,5 @@ export class OnboardingPage extends BasePage {
     await expect(this.page.getByText("Generowanie planu...")).toBeVisible();
   }
 }
+
+

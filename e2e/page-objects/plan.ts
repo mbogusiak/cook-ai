@@ -85,3 +85,5 @@ export class RecipeModalPO extends BasePage {
     return this.getByTestId("meal-recipe-link");
   }
 }
+
+
